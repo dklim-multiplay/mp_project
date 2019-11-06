@@ -21,7 +21,7 @@ if(!textArea){
     leftDiv.parentNode.replaceChild(textAreaDiv, leftDiv);
 }
 
-/////
+/////testing...
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
 li1.setAttribute("style", "margin-top: 1%");
