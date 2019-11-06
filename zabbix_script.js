@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
-
+//
 var textAreaDiv = document.createElement("TEXTAREA");
 textAreaDiv.setAttribute("style", "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey;");
 
