@@ -6,10 +6,12 @@
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
 // @grant        GM.xmlHttpRequest
+// @updateURL    https://skylimdg89.github.io/mp_project/zabbix_script.js
+// @downloadURL	 https://skylimdg89.github.io/mp_project/zabbix_script.js
 // ==/UserScript==
 
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
-//
+
 var textAreaDiv = document.createElement("TEXTAREA");
 textAreaDiv.setAttribute("style", "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey;");
 
@@ -19,7 +21,7 @@ if(!textArea){
     leftDiv.parentNode.replaceChild(textAreaDiv, leftDiv);
 }
 
-////////
+/////
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
 li1.setAttribute("style", "margin-top: 1%");
@@ -165,9 +167,9 @@ function getData(doc,hostnames){
     console.log("getData called, hostnames= " + hostnames);
     var data = doc.getElementsByClassName('scrolltable');
   	var data_array = data[0].innerText.split("\n");
-  	
+
   	var my_array = [];
-  	
+
   	for(var i=0; i < data_array.length; i++){
     	if(data_array[i]==""){}
       else if(data_array[i]=="\t"){}
@@ -177,7 +179,7 @@ function getData(doc,hostnames){
       }
     }
   	console.log(my_array[5]);
-  
+
   	//2,3,4,5,9
 		textAreaDiv.value = "ip: " + my_array[3] + "\nhostname: " + my_array[2] + "\nlocation: " + my_array[4] + "\nDC: " + my_array[5] + "\nreference: " + my_array[9];
   	var t_ip = document.createTextNode(my_array[3]);
@@ -185,29 +187,29 @@ function getData(doc,hostnames){
 
   	var t_dc = document.createTextNode(my_array[5]);
     //td4.appendChild(t_dc);
-  
+
   	var t_ref = document.createTextNode(my_array[9]);
     //td5.appendChild(t_ref);
-  
+
 }
 
 function getR5data(doc){
 
     console.log("in getR5ata");
-  
-  
+
+
     var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
 		var r5_array = [];
   	var r5_string = "";
     var rowLength = myTable[0].rows.length;
-    
+
     var parseSplit;
     var parseArrayR5 = [];
     var jsonStrR5 = '{"R5Image":[{"game image":"", "version":""}]}';
-    var obj = JSON.parse(jsonStrR5);   
-  	
+    var obj = JSON.parse(jsonStrR5);
+
     var image_array = [];
     var version_array=[];
     for(i=1; i<rowLength;i++){
@@ -216,7 +218,7 @@ function getR5data(doc){
     }
 		console.log(r5_array);
   	console.log(version_array);
-  
+
   	var my_array = [];
   	var my_string = "";
   	obj['R5Image'].pop();
@@ -226,7 +228,7 @@ function getR5data(doc){
       obj['R5Image'].push({"game image":r5_array[i], "version":version_array[i]});
       jsonStrR5 = JSON.stringify(obj);
     }
-  	
+
   	console.log(my_array);
   	textAreaDiv.value = my_string;
   console.log(jsonStrR5);
@@ -294,7 +296,7 @@ function logzio_button(){
 
 function scraping_button(){
 	getDeviceInfo();
-  
+
 }
 
 function r5image_button(){
