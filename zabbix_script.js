@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.6
+// @version      0.1.6.1
 // @description  Zabbix Script
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
