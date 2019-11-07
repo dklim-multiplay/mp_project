@@ -1,15 +1,17 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.1.4.1
 // @description  Zabbix Script
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
 // @grant        GM.xmlHttpRequest
-// @updateURL    https://skylimdg89.github.io/mp_project/zabbix_script.js
-// @downloadURL	 https://skylimdg89.github.io/mp_project/zabbix_script.js
+// @updateURL    https://drive.google.com/file/d/1ELzpn6ptYOaGjbRSxbGFYvnbYXGrIzts/view
+// @downloadURL	 https://drive.google.com/file/d/1ELzpn6ptYOaGjbRSxbGFYvnbYXGrIzts/view
+// @run-at       document-end
 // ==/UserScript==
 
+//testing
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
 
 var textAreaDiv = document.createElement("TEXTAREA");
@@ -21,7 +23,7 @@ if(!textArea){
     leftDiv.parentNode.replaceChild(textAreaDiv, leftDiv);
 }
 
-/////testing...
+/////
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
 li1.setAttribute("style", "margin-top: 1%");
