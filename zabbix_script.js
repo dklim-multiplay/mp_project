@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.5.1
+// @version      0.1.6
 // @description  Zabbix Script
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -11,7 +11,7 @@
 // @run-at       document-end
 // ==/UserScript==
 
-//testing
+//testing 1.6
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
 
 var textAreaDiv = document.createElement("TEXTAREA");
