@@ -6,8 +6,8 @@
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
 // @grant        GM.xmlHttpRequest
-// @updateURL    https://drive.google.com/file/d/1ELzpn6ptYOaGjbRSxbGFYvnbYXGrIzts/view
-// @downloadURL	 https://drive.google.com/file/d/1ELzpn6ptYOaGjbRSxbGFYvnbYXGrIzts/view
+// @updateURL    https://skylimdg89.github.io/mp_project/zabbix_script.js
+// @downloadURL	 https://skylimdg89.github.io/mp_project/zabbix_script.js
 // @run-at       document-end
 // ==/UserScript==
 
