@@ -12,8 +12,26 @@
 // ==/UserScript==
 
 //version 0.1.6.4
-var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
 
+//styles (TBD)
+/*
+var default_button_style;
+var style_orange;
+var style_blue;
+*/
+
+//url (TBD)
+/*
+var gameforge_hn;
+var gameforge_ip;
+var procurement_hn;
+var procurement_ip;
+var logzio;
+var gameforge_deleted;
+*/
+
+//Replaces leftDiv with text area and buttons
+var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
 var textAreaDiv = document.createElement("TEXTAREA");
 textAreaDiv.setAttribute("style", "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey;");
 
@@ -23,7 +41,9 @@ if(!textArea){
     leftDiv.parentNode.replaceChild(textAreaDiv, leftDiv);
 }
 
-/////
+/*
+Creates list items and adds buttons
+*/
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
 li1.setAttribute("style", "margin-top: 1%");
@@ -45,7 +65,6 @@ machines_ip.value="GF Machines (ip address)";
 machines_ip.setAttribute("style", "position: relative; left: 2%; min-width:12%");
 machines_ip.onclick = gotogameforge_machinesip;
 document.getElementById("li1a").appendChild(machines_ip);
-
 
 var li2 = document.createElement("li");
 li2.setAttribute("id", "li2");
@@ -113,7 +132,9 @@ r5image.onclick = r5image_button;
 r5image.setAttribute("style", "position: relative; left: 2%; min-width:12%");
 document.getElementById("li9").appendChild(r5image);
 
-
+/*
+Functions
+*/
 function getDeviceInfo(){
     console.log("getDeviceInfo called");
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
@@ -152,8 +173,12 @@ function getDeviceInfo(){
     });
 }
 
+/*
+Desc: This function gets the game images and the version number. You can simply check the latest version of game images
+*/
 function getR5images(){
     console.log("getR5Images called");
+    //r5 game images
     var url = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=1367;event=Online;block=1";
 
     GM.xmlHttpRequest({
@@ -180,7 +205,7 @@ function getR5images(){
                     var testName = getR5data(xhr_doc);
 
                     console.log(testName);
-                  	console.log("https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=1367;event=Online;block=1");
+                    console.log("https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=1367;event=Online;block=1");
                 }
             }}
     });
@@ -206,15 +231,15 @@ function getData(doc,hostnames){
   	console.log(my_array[5]);
 
   	//2,3,4,5,9
-		textAreaDiv.value = "ip: " + my_array[3] + "\nhostname: " + my_array[2] + "\nlocation: " + my_array[4] + "\nDC: " + my_array[5] + "\nreference: " + my_array[9];
+	textAreaDiv.value = "ip: " + my_array[3] + "\nhostname: " + my_array[2] + "\nlocation: " + my_array[4] + "\nDC: " + my_array[5] + "\nreference: " + my_array[9];
   	var t_ip = document.createTextNode(my_array[3]);
-    //td2.appendChild(t_ip);
+    	//td2.appendChild(t_ip);
 
   	var t_dc = document.createTextNode(my_array[5]);
-    //td4.appendChild(t_dc);
+    	//td4.appendChild(t_dc);
 
   	var t_ref = document.createTextNode(my_array[9]);
-    //td5.appendChild(t_ref);
+    	//td5.appendChild(t_ref);
 
 }
 
@@ -254,9 +279,9 @@ function getR5data(doc){
       jsonStrR5 = JSON.stringify(obj);
     }
 
-  	console.log(my_array);
-  	textAreaDiv.value = my_string;
-  console.log(jsonStrR5);
+	console.log(my_array);
+	textAreaDiv.value = my_string;
+	console.log(jsonStrR5);
 }
 
 
@@ -284,7 +309,7 @@ function gotogameforge_machinesip()
         window.open(gameforge,'_blank');
     }
     else{
-        alert("Type ips");
+        alert("Type ip address");
     }
 }
 
@@ -314,8 +339,6 @@ function gotogameforge_procurementip()
         alert("Type hostname");
     }
 }
-
-
 
 function deleted_button()
 {
