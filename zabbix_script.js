@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.6.3
+// @version      0.1.6.4
 // @description  Zabbix Script
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -11,7 +11,7 @@
 // @run-at       document-end
 // ==/UserScript==
 
-//testing 0.1.6.3
+//version 0.1.6.4
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0];
 
 var textAreaDiv = document.createElement("TEXTAREA");
@@ -53,15 +53,26 @@ li2.setAttribute("style", "margin-top: 0.3%");
 li1a.parentNode.appendChild(li2);
 var procurement=document.createElement("input");
 procurement.type="button";
-procurement.value="GF Procurement";
+procurement.value="GF Procurement (hostname)";
 procurement.setAttribute("style", "position: relative; left: 2%; min-width:12%");
 procurement.onclick = gotogameforge_procurement;
 document.getElementById("li2").appendChild(procurement);
 
+var li2a = document.createElement("li");
+li2a.setAttribute("id", "li2a");
+li2a.setAttribute("style", "margin-top: 0.3%");
+li2.parentNode.appendChild(li2a);
+var procurement_ip=document.createElement("input");
+procurement_ip.type="button";
+procurement_ip.value="GF Procurement (ip address)";
+procurement_ip.setAttribute("style", "position: relative; left: 2%; min-width:12%");
+procurement_ip.onclick = gotogameforge_procurementip;
+document.getElementById("li2a").appendChild(procurement_ip);
+
 var li3 = document.createElement("li");
 li3.setAttribute("id", "li3");
 li3.setAttribute("style", "margin-top: 0.3%");
-li2.parentNode.appendChild(li3);
+li2a.parentNode.appendChild(li3);
 var deleted = document.createElement("input");
 deleted.type = "button";
 deleted.value = "GF Deleted";
@@ -268,7 +279,7 @@ function gotogameforge_machinesip()
     var ips = document.getElementsByTagName("TEXTAREA")[0].value;
     ips = ips.replace(/\n/g,",");
     console.log(ips);
-    var gameforge = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=ip%23%3A%23"+ips
+    var gameforge = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=ip%23%3A%23"+ips;
     if(ips != ""){
         window.open(gameforge,'_blank');
     }
@@ -281,7 +292,8 @@ function gotogameforge_procurement()
 {
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
     hostnames = hostnames.replace(/\n/g,",");
-    var gameforge = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=name%23%3A%23"+hostnames
+    var gameforge = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=name%23%3A%23"+hostnames;
+
     if(hostnames!=""){
         window.open(gameforge,'_blank');
     }
@@ -289,6 +301,21 @@ function gotogameforge_procurement()
         alert("Type hostname");
     }
 }
+
+function gotogameforge_procurementip()
+{
+    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
+    hostnames = hostnames.replace(/\n/g,",");
+    var gameforge_ip="https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=ip%23%3A%23" + hostnames;
+    if(hostnames!=""){
+        window.open(gameforge_ip,'_blank');
+    }
+    else{
+        alert("Type hostname");
+    }
+}
+
+
 
 function deleted_button()
 {
