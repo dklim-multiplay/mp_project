@@ -2,8 +2,8 @@
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
 // @version      0.1.6.4
-// @description  Zabbix Script
-// @author       dklim
+// @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
+// @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
 // @grant        GM.xmlHttpRequest
 // @updateURL    https://raw.githubusercontent.com/skylimdg89/mp_project/master/zabbix_script.js
