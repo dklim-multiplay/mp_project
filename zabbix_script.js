@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.6.2
+// @version      0.1.6.3
 // @description  Zabbix Script
 // @author       dklim
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -30,15 +30,27 @@ li1.setAttribute("style", "margin-top: 1%");
 textAreaDiv.parentNode.appendChild(li1);///
 var machines=document.createElement("input");
 machines.type="button";
-machines.value="GF Machines";
+machines.value="GF Machines (hostname)";
 machines.setAttribute("style", "position: relative; left: 2%; min-width:12%");
 machines.onclick = gotogameforge_machines;
 document.getElementById("li1").appendChild(machines);
 
+var li1a = document.createElement("li");
+li1a.setAttribute("id", "li1a");
+li1a.setAttribute("style", "margin-top: 0.3%");
+textAreaDiv.parentNode.appendChild(li1a);///
+var machines_ip=document.createElement("input");
+machines_ip.type="button";
+machines_ip.value="GF Machines (ip address)";
+machines_ip.setAttribute("style", "position: relative; left: 2%; min-width:12%");
+machines_ip.onclick = gotogameforge_machinesip;
+document.getElementById("li1a").appendChild(machines_ip);
+
+
 var li2 = document.createElement("li");
 li2.setAttribute("id", "li2");
 li2.setAttribute("style", "margin-top: 0.3%");
-li1.parentNode.appendChild(li2);
+li1a.parentNode.appendChild(li2);
 var procurement=document.createElement("input");
 procurement.type="button";
 procurement.value="GF Procurement";
@@ -214,7 +226,7 @@ function getR5data(doc){
 
     var image_array = [];
     var version_array=[];
-    for(i=1; i<rowLength;i++){
+    for(var i=1; i<rowLength;i++){
     	r5_array.push(oTable.rows.item(i).cells[1].innerText);
     	version_array.push(oTable.rows.item(i).cells[2].innerText);
     }
@@ -248,6 +260,20 @@ function gotogameforge_machines()
     }
     else{
         alert("Type hostname");
+    }
+}
+
+function gotogameforge_machinesip()
+{
+    var ips = document.getElementsByTagName("TEXTAREA")[0].value;
+    ips = ips.replace(/\n/g,",");
+    console.log(ips);
+    var gameforge = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=ip%23%3A%23"+ips
+    if(ips != ""){
+        window.open(gameforge,'_blank');
+    }
+    else{
+        alert("Type ips");
     }
 }
 
