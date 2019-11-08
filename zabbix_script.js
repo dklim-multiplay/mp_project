@@ -15,19 +15,20 @@
 
 //styles (TBD)
 /*
-var default_button_style;
+var style_default_button;
 var style_orange;
 var style_blue;
+var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 */
 
 //url (TBD)
 /*
-var gameforge_hn;
-var gameforge_ip;
-var procurement_hn;
-var procurement_ip;
-var logzio;
-var gameforge_deleted;
+var url_gameforge_hn;
+var url_gameforge_ip;
+var url_procurement_hn;
+var url_procurement_ip;
+var url_logzio;
+var url_gameforge_deleted;
 */
 
 //Replaces leftDiv with text area and buttons
