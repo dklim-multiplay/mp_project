@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.7
+// @version      0.1.7.1
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -14,10 +14,11 @@
 //version 0.1.6.5
 
 //styles
-var style_default_button = "position: relative; left: 2%; min-width:12%";
+var style_default_button = "position: relative; left: 2%; min-width:12%; max-width:12%";
 var style_lightblue = "position: relative; left: 2%; min-width:12%; background-color: lightblue";
 var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 var style_orange = "position: relative; left: 2%; min-width:12%; background-color: orange";
+var style_dropdownlist = "position: relative; left: 2%; min-width:12%; max-width:12%";
 
 //url
 var url_gameforge_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=name%23%3A%23";
@@ -36,9 +37,9 @@ var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=In
 var game_images2 = ";event=Online;block=1";
 
 // section id
-var sectionid_r5 = "1367";
-var sectionid_stones = "1355";
-var sectionid_lonecho = "1343";
+//var sectionid_r5 = "1367";
+//var sectionid_stones = "1355";
+//var sectionid_lonecho = "1343";
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -150,6 +151,7 @@ li6.parentNode.appendChild(li7);
 var dropdownlist = document.createElement("SELECT");
 dropdownlist.setAttribute("id", "dropdownlist");
 //dropdownlist.setAttribute("style", style_default_button);
+dropdownlist.setAttribute("style", style_dropdownlist);
 
 document.getElementById("li7").appendChild(dropdownlist);
 
