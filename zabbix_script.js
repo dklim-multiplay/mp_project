@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.6.5
+// @version      0.1.7
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -27,8 +27,9 @@ var url_procurement_ip = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?
 var url_deleted_machines1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=name%23%3A%23";
 var url_deleted_machines2 = ";MachinesFilter_filter_deleted_options=1;MachinesFilter_filter_value=Yes;MachinesFilter_filter_go=Go";
 var url_logzio1 = "https://app-eu.logz.io/#/dashboard/kibana/discover?_a=(columns:!(message),index:%5BlogzioCustomerIndex%5DYYMMDD,interval:auto,query:(language:lucene,query:%22";
-var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-4h,mode:quick,to:now))&accountIds=31168&accountIds=31077&accountIds=62777&accountIds=54571&accountIds=31166&accountIds=97966&accountIds=82670&accountIds=30901"
-;
+var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-4h,mode:quick,to:now))&accountIds=31168&accountIds=31077&accountIds=62777&accountIds=54571&accountIds=31166&accountIds=97966&accountIds=82670&accountIds=30901";
+var url_image_menu = "https://gameforge.multiplay.co.uk/events/Online/toolbar.html?sectionid=6;section=;modid=0;admin=0";
+var string_sectionid = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
 
 // game image
 var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=";
@@ -139,7 +140,39 @@ r5image.type="button";
 r5image.value="r5image";
 r5image.onclick = r5image_button;
 r5image.setAttribute("style", style_default_button);
-document.getElementById("li6").appendChild(r5image);
+//document.getElementById("li6").appendChild(r5image);
+
+///testing...
+var li7 = document.createElement("li");
+li7.setAttribute("id", "li7");
+li7.setAttribute("style", "margin-top: 0.3%");
+li6.parentNode.appendChild(li7);
+var dropdownlist = document.createElement("SELECT");
+dropdownlist.setAttribute("id", "dropdownlist");
+//dropdownlist.setAttribute("style", style_default_button);
+
+document.getElementById("li7").appendChild(dropdownlist);
+
+var li8 = document.createElement("li");
+li8.setAttribute("id", "li8");
+li8.setAttribute("style", "margin-top: 0.3%");
+li7.parentNode.appendChild(li8);
+var images =document.createElement("input");
+images.type="button";
+images.value="Load Images";
+images.onclick = images_button;
+images.setAttribute("style", style_default_button);
+document.getElementById("li8").appendChild(images);
+
+///
+/*
+*/
+var option;
+var map= new Map();
+getGameImages();
+/*
+*/
+
 
 /*
 Functions
@@ -184,11 +217,12 @@ function getDeviceInfo(){
 /*
 Desc: This function gets the game images and the version number. You can simply check the latest version of game images
 */
-function getR5images(){
+function getImageURL(section_id){
     console.log("getR5Images called");
     //r5 game images
-    var url = game_images1 + sectionid_r5 + game_images2;
-
+    //var url = game_images1 + sectionid_r5 + game_images2;
+    var url = game_images1 + section_id + game_images2;
+    console.log(section_id);
     GM.xmlHttpRequest({
         method: 'GET',
         url: url,
@@ -208,9 +242,9 @@ function getR5images(){
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
 
-                    console.log("callinng r5 game images");
+                    console.log("callinng game images");
 
-                    var testName = getR5data(xhr_doc);
+                    var testName = getImagesdata(xhr_doc);
 
                     console.log(testName);
                     console.log(url);
@@ -219,6 +253,84 @@ function getR5images(){
     });
 }
 
+/* testing
+*/
+function getGameImages(){
+    console.log("getGameImages called");
+    var url = url_image_menu;
+    GM.xmlHttpRequest({
+        method: 'GET',
+        url: url,
+        headers: {
+            'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
+            'Accept': 'application/atom+xml,application/xml,text/xml',
+        },
+        //onload: function(response){
+        onreadystatechange: function(response) {
+            if (response.readyState === 4) {
+                if (response.status == 200) {
+
+                    var range = document.createRange();
+                    range.setStartAfter(document.body);
+                    var xhr_frag = range.createContextualFragment(response.responseText);
+                    var xhr_doc = document.implementation.createDocument(null, 'html', null);
+                    xhr_doc.adoptNode(xhr_frag);
+                    xhr_doc.documentElement.appendChild(xhr_frag);
+
+                    console.log("callinng testName");
+
+                    var testName = getImages(xhr_doc);
+
+                    //console.log(testName);
+                }
+            }}
+    });
+}
+
+function getImages(doc){
+
+    /*
+    */
+    var mytable = doc.getElementsByClassName("menugrplink");
+
+    var table_length = mytable.length;
+    var table_string;
+    var split_string;
+    var section_string;
+
+    var map_key;
+    var map_value;
+    var section_key;
+    var key_array=[];
+    var value_array=[];
+
+    for(var i = 25; i < 135; i++){
+        table_string = mytable[i].innerHTML;
+        split_string = table_string.split("\"");
+
+        for(var j=0; j < split_string.length; j++){
+            if(split_string[j] == " title="){
+                map_key = split_string[j+1];
+                key_array.push(map_key);
+            }
+            if(split_string[j].includes(string_sectionid) == true){
+                section_string = split_string[j].replace(string_sectionid,"");
+                map_value = section_string.substring(0,4);
+                value_array.push(map_value);
+            }
+            map.set(map_key, map_value);
+        }
+
+    }
+    //console.log(key_array);
+    //console.log(value_array);
+
+    for (var k = 0; k < key_array.length; k++) {
+        option = document.createElement('option');
+        option.value = option.text = key_array[k];
+        dropdownlist.add(option);
+    }
+}
 
 function getData(doc,hostnames){
 
@@ -252,45 +364,42 @@ function getData(doc,hostnames){
 
 }
 
-function getR5data(doc){
+function getImagesdata(doc){
 
     console.log("in getR5ata");
-
 
     var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
-		var r5_array = [];
+	var name_array = [];
   	var r5_string = "";
     var rowLength = myTable[0].rows.length;
 
     var parseSplit;
     var parseArrayR5 = [];
-    var jsonStrR5 = '{"R5Image":[{"game image":"", "version":""}]}';
-    var obj = JSON.parse(jsonStrR5);
+    var jsonStr = '{"Images":[{"game image":"", "version":""}]}';
+    var obj = JSON.parse(jsonStr);
 
     var image_array = [];
     var version_array=[];
     for(var i=1; i<rowLength;i++){
-    	r5_array.push(oTable.rows.item(i).cells[1].innerText);
+    	name_array.push(oTable.rows.item(i).cells[1].innerText);
     	version_array.push(oTable.rows.item(i).cells[2].innerText);
     }
-	console.log(r5_array);
-  	console.log(version_array);
 
   	var my_array = [];
   	var my_string = "";
-  	obj['R5Image'].pop();
-  	for(i=1; i<r5_array.length; i++){
-    	my_array.push(r5_array[i] + " " + version_array[i]);
-      my_string = my_string + r5_array[i] + " " + version_array[i] + "\n";
-      obj['R5Image'].push({"game image":r5_array[i], "version":version_array[i]});
-      jsonStrR5 = JSON.stringify(obj);
+  	obj['Images'].pop();
+  	for(i=0; i<name_array.length; i++){
+      my_array.push(name_array[i] + " " + version_array[i]);
+      my_string = my_string + name_array[i] + " " + version_array[i] + "\n";
+      obj['Images'].push({"game image":name_array[i], "version":version_array[i]});
+      jsonStr = JSON.stringify(obj);
     }
 
 	console.log(my_array);
 	textAreaDiv.value = my_string;
-	console.log(jsonStrR5);
+	console.log(jsonStr);
 }
 
 
@@ -380,13 +489,20 @@ function logzio_button(){
     }
 }
 
-
 function scraping_button(){
 	getDeviceInfo();
 
 }
 
 function r5image_button(){
-  getR5images();
+  //getImageURL();
 
+}
+
+function images_button(){
+    console.log("images button clicked");
+    var image_name = document.getElementById("dropdownlist");
+    var strUser = image_name.options[image_name.selectedIndex].value;
+    var section_id = map.get(strUser);
+    getImageURL(section_id);
 }
