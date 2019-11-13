@@ -11,8 +11,6 @@
 // @run-at       document-end
 // ==/UserScript==
 
-//version 0.1.6.5
-
 //styles
 var style_default_button = "position: relative; left: 2%; min-width:12%; max-width:12%";
 var style_lightblue = "position: relative; left: 2%; min-width:12%; background-color: lightblue";
