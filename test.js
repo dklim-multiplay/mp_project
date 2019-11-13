@@ -138,7 +138,7 @@ r5image.type="button";
 r5image.value="r5image";
 r5image.onclick = r5image_button;
 r5image.setAttribute("style", style_default_button);
-document.getElementById("li6").appendChild(r5image);
+//document.getElementById("li6").appendChild(r5image);
 
 ///testing...
 var li7 = document.createElement("li");
@@ -150,17 +150,26 @@ dropdownlist.setAttribute("id", "dropdownlist");
 //dropdownlist.setAttribute("style", style_default_button);
 
 document.getElementById("li7").appendChild(dropdownlist);
+
+var li8 = document.createElement("li");
+li8.setAttribute("id", "li8");
+li8.setAttribute("style", "margin-top: 0.3%");
+li7.parentNode.appendChild(li8);
+var images =document.createElement("input");
+images.type="button";
+images.value="Load Images";
+images.onclick = images_button;
+images.setAttribute("style", style_default_button);
+document.getElementById("li8").appendChild(images);
+
 ///
 /*
 */
 var option;
+var map= new Map();
 getGameImages();
-
-
 /*
 */
-
-
 
 
 /*
@@ -206,11 +215,12 @@ function getDeviceInfo(){
 /*
 Desc: This function gets the game images and the version number. You can simply check the latest version of game images
 */
-function getR5images(){
+function getImageURL(section_id){
     console.log("getR5Images called");
     //r5 game images
-    var url = game_images1 + sectionid_r5 + game_images2;
-
+    //var url = game_images1 + sectionid_r5 + game_images2;
+    var url = game_images1 + section_id + game_images2;
+    console.log(section_id);
     GM.xmlHttpRequest({
         method: 'GET',
         url: url,
@@ -230,9 +240,9 @@ function getR5images(){
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
 
-                    console.log("callinng r5 game images");
+                    console.log("callinng game images");
 
-                    var testName = getR5data(xhr_doc);
+                    var testName = getImagesdata(xhr_doc);
 
                     console.log(testName);
                     console.log(url);
@@ -285,16 +295,14 @@ function getImages(doc){
     var table_string;
     var split_string;
     var section_string;
-    var map= new Map();
+    //var map= new Map();
     var map_key;
     var map_value;
-
     var section_key;
-
     var key_array=[]; //
     var value_array=[]; //
 
-    for(var i = 24; i < 135; i++){
+    for(var i = 25; i < 135; i++){
         table_string = mytable[i].innerHTML;
         //table_string = table_string.split("\ ");
         //console.log(table_string[table_string.length-1].replace("</a>",""));
@@ -340,10 +348,6 @@ function getImages(doc){
         option.value = option.text = key_array[k];
         dropdownlist.add(option);
     }
-
-
-
-
 }
 
 /*
@@ -383,45 +387,44 @@ function getData(doc,hostnames){
 
 }
 
-function getR5data(doc){
+function getImagesdata(doc){
 
     console.log("in getR5ata");
-
 
     var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
-		var r5_array = [];
+	var name_array = [];
   	var r5_string = "";
     var rowLength = myTable[0].rows.length;
 
     var parseSplit;
     var parseArrayR5 = [];
-    var jsonStrR5 = '{"R5Image":[{"game image":"", "version":""}]}';
-    var obj = JSON.parse(jsonStrR5);
+    var jsonStr = '{"Image":[{"game image":"", "version":""}]}';
+    var obj = JSON.parse(jsonStr);
 
     var image_array = [];
     var version_array=[];
     for(var i=1; i<rowLength;i++){
-    	r5_array.push(oTable.rows.item(i).cells[1].innerText);
+    	name_array.push(oTable.rows.item(i).cells[1].innerText);
     	version_array.push(oTable.rows.item(i).cells[2].innerText);
     }
-	console.log(r5_array);
+	console.log("name_array = " + name_array);
   	console.log(version_array);
 
   	var my_array = [];
   	var my_string = "";
-  	obj['R5Image'].pop();
-  	for(i=1; i<r5_array.length; i++){
-    	my_array.push(r5_array[i] + " " + version_array[i]);
-      my_string = my_string + r5_array[i] + " " + version_array[i] + "\n";
-      obj['R5Image'].push({"game image":r5_array[i], "version":version_array[i]});
-      jsonStrR5 = JSON.stringify(obj);
+  	obj['Image'].pop();
+  	for(i=0; i<name_array.length; i++){
+      my_array.push(name_array[i] + " " + version_array[i]);
+      my_string = my_string + name_array[i] + " " + version_array[i] + "\n";
+      obj['Image'].push({"game image":name_array[i], "version":version_array[i]});
+      jsonStr = JSON.stringify(obj);
     }
 
 	console.log(my_array);
 	textAreaDiv.value = my_string;
-	console.log(jsonStrR5);
+	console.log(jsonStr);
 }
 
 
@@ -517,6 +520,16 @@ function scraping_button(){
 }
 
 function r5image_button(){
-  getR5images();
+  //getImageURL();
 
+}
+
+function images_button(){
+    console.log("images button clicked");
+    var image_name = document.getElementById("dropdownlist");
+    var strUser = image_name.options[image_name.selectedIndex].value;
+    console.log(strUser);
+    console.log(map.get(strUser));
+    var section_id = map.get(strUser);
+    getImageURL(section_id);
 }
