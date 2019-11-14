@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.7.2
+// @version      0.1.7.3
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -40,7 +40,6 @@ var textAreaDiv = document.createElement("TEXTAREA");
 textAreaDiv.setAttribute("style", style_textArea);
 
 var textArea = document.getElementsByTagName("TEXTAREA")[0];
-
 if(!textArea){
     leftDiv.parentNode.replaceChild(textAreaDiv, leftDiv);
 }
@@ -196,8 +195,6 @@ function getDeviceInfo(){
                     console.log("callinng testName");
 
                     var testName = getData(xhr_doc,hostnames);
-
-                    console.log(testName);
                 }
             }}
     });
@@ -207,7 +204,7 @@ function getDeviceInfo(){
 Desc: This function gets the game images and the version number. You can simply check the latest version of game images
 */
 function getImageURL(section_id){
-    console.log("getR5Images called");
+    console.log("getImageURL called");
     var url = game_images1 + section_id + game_images2;
     console.log(section_id);
     GM.xmlHttpRequest({
@@ -228,20 +225,14 @@ function getImageURL(section_id){
                     var xhr_doc = document.implementation.createDocument(null, 'html', null);
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
-
                     console.log("callinng game images");
-
                     var testName = getImagesdata(xhr_doc);
-
-                    console.log(testName);
                     console.log(url);
                 }
             }}
     });
 }
 
-/* testing
-*/
 function getGameImages(){
     console.log("getGameImages called");
     var url = url_image_menu;
@@ -256,7 +247,6 @@ function getGameImages(){
         onreadystatechange: function(response) {
             if (response.readyState === 4) {
                 if (response.status == 200) {
-
                     var range = document.createRange();
                     range.setStartAfter(document.body);
                     var xhr_frag = range.createContextualFragment(response.responseText);
@@ -265,7 +255,6 @@ function getGameImages(){
                     xhr_doc.documentElement.appendChild(xhr_frag);
                     console.log("callinng testName");
                     var testName = getImages(xhr_doc);
-
                 }
             }}
     });
@@ -281,14 +270,22 @@ function getImages(doc){
     var key_array=[];
     var value_array=[];
 
-    console.log("table_length = " + table_length);
     for(var i =0; i< table_length; i++){
         map_key = mytable[i].childNodes[0].title;
         section_string = mytable[i].childNodes[0].href.replace(string_sectionid,"");
-        key_array.push(map_key);
-        map_value = section_string.substring(0,4);
-        value_array.push(map_value);
-        map.set(map_key, map_value);
+        if(section_string[3]==";"){//filling floor section id is 934
+            map_value = section_string.substring(0,3);
+        }
+        else{
+            map_value = section_string.substring(0,4);
+        }
+
+        //check if map_value is positive whole numbers
+        if(/^\d+$/.test(map_value)==true){
+            key_array.push(map_key);
+            value_array.push(map_value);
+            map.set(map_key, map_value);
+        }
     }
     for (var k = 0; k < key_array.length; k++) {
         option = document.createElement('option');
@@ -296,8 +293,6 @@ function getImages(doc){
         dropdownlist.add(option);
     }
 }
-
-
 
 function getData(doc,hostnames){
 
@@ -320,13 +315,13 @@ function getData(doc,hostnames){
   	//2,3,4,5,9
 	textAreaDiv.value = "ip: " + my_array[3] + "\nhostname: " + my_array[2] + "\nlocation: " + my_array[4] + "\nDC: " + my_array[5] + "\nreference: " + my_array[9];
   	var t_ip = document.createTextNode(my_array[3]);
-    	//td2.appendChild(t_ip);
+    //td2.appendChild(t_ip);
 
   	var t_dc = document.createTextNode(my_array[5]);
-    	//td4.appendChild(t_dc);
+    //td4.appendChild(t_dc);
 
   	var t_ref = document.createTextNode(my_array[9]);
-    	//td5.appendChild(t_ref);
+    //td5.appendChild(t_ref);
 
 }
 
@@ -363,7 +358,6 @@ function getImagesdata(doc){
       jsonStr = JSON.stringify(obj);
     }
 
-	console.log(my_array);
 	textAreaDiv.value = my_string;
 	console.log(jsonStr);
 }
@@ -372,8 +366,7 @@ function getImagesdata(doc){
 function gotogameforge_machines()
 {
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");
-    console.log(hostnames);
+    hostnames = hostnames.replace(/\n/g,","); 
     var gameforge = url_gameforge_hostname + hostnames
     if(hostnames != ""){
         window.open(gameforge,'_blank');
@@ -387,7 +380,6 @@ function gotogameforge_machinesip()
 {
     var ips = document.getElementsByTagName("TEXTAREA")[0].value;
     ips = ips.replace(/\n/g,",");
-    console.log(ips);
     var gameforge = url_gameforge_ip + ips;
     if(ips != ""){
         window.open(gameforge,'_blank');
