@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.7.1
+// @version      0.1.7.2
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -33,11 +33,6 @@ var string_sectionid = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
 // game image
 var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=";
 var game_images2 = ";event=Online;block=1";
-
-// section id
-//var sectionid_r5 = "1367";
-//var sectionid_stones = "1355";
-//var sectionid_lonecho = "1343";
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -148,7 +143,6 @@ li7.setAttribute("style", "margin-top: 0.3%");
 li6.parentNode.appendChild(li7);
 var dropdownlist = document.createElement("SELECT");
 dropdownlist.setAttribute("id", "dropdownlist");
-//dropdownlist.setAttribute("style", style_default_button);
 dropdownlist.setAttribute("style", style_dropdownlist);
 
 document.getElementById("li7").appendChild(dropdownlist);
@@ -164,14 +158,9 @@ images.onclick = images_button;
 images.setAttribute("style", style_default_button);
 document.getElementById("li8").appendChild(images);
 
-///
-/*
-*/
 var option;
 var map= new Map();
 getGameImages();
-/*
-*/
 
 
 /*
@@ -219,8 +208,6 @@ Desc: This function gets the game images and the version number. You can simply 
 */
 function getImageURL(section_id){
     console.log("getR5Images called");
-    //r5 game images
-    //var url = game_images1 + sectionid_r5 + game_images2;
     var url = game_images1 + section_id + game_images2;
     console.log(section_id);
     GM.xmlHttpRequest({
@@ -276,12 +263,9 @@ function getGameImages(){
                     var xhr_doc = document.implementation.createDocument(null, 'html', null);
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
-
                     console.log("callinng testName");
-
                     var testName = getImages(xhr_doc);
 
-                    //console.log(testName);
                 }
             }}
     });
@@ -289,48 +273,31 @@ function getGameImages(){
 
 function getImages(doc){
 
-    /*
-    */
     var mytable = doc.getElementsByClassName("menugrplink");
-
     var table_length = mytable.length;
-    var table_string;
-    var split_string;
     var section_string;
-
     var map_key;
     var map_value;
-    var section_key;
     var key_array=[];
     var value_array=[];
 
-    for(var i = 25; i < 135; i++){
-        table_string = mytable[i].innerHTML;
-        split_string = table_string.split("\"");
-
-        for(var j=0; j < split_string.length; j++){
-            if(split_string[j] == " title="){
-                map_key = split_string[j+1];
-                key_array.push(map_key);
-            }
-            if(split_string[j].includes(string_sectionid) == true){
-                section_string = split_string[j].replace(string_sectionid,"");
-                map_value = section_string.substring(0,4);
-                value_array.push(map_value);
-            }
-            map.set(map_key, map_value);
-        }
-
+    console.log("table_length = " + table_length);
+    for(var i =0; i< table_length; i++){
+        map_key = mytable[i].childNodes[0].title;
+        section_string = mytable[i].childNodes[0].href.replace(string_sectionid,"");
+        key_array.push(map_key);
+        map_value = section_string.substring(0,4);
+        value_array.push(map_value);
+        map.set(map_key, map_value);
     }
-    //console.log(key_array);
-    //console.log(value_array);
-
     for (var k = 0; k < key_array.length; k++) {
         option = document.createElement('option');
         option.value = option.text = key_array[k];
         dropdownlist.add(option);
     }
 }
+
+
 
 function getData(doc,hostnames){
 
@@ -348,7 +315,6 @@ function getData(doc,hostnames){
       	my_array.push(data_array[i].trim());
       }
     }
-  	console.log(my_array[5]);
 
     //testing...
   	//2,3,4,5,9
@@ -496,7 +462,6 @@ function scraping_button(){
 
 function r5image_button(){
   //getImageURL();
-
 }
 
 function images_button(){
