@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8
+// @version      0.1.8.1
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -210,34 +210,36 @@ function getDeviceInfo(){
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
     hostnames = hostnames.replace(/\n/g,",");//
     var url = url_procurement_hostname + hostnames;
-    if(hostnames == ""){window.alert("Please provide the info");}
+    if(hostnames == ""){
+        window.alert("Please provide the info");
+    }
+    else{
+        console.log("url ===== " + url);
+        GM.xmlHttpRequest({
+            method: 'GET',
+            url: url,
+            headers: {
+                'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
+                'Accept': 'application/atom+xml,application/xml,text/xml',
+            },
+            //onload: function(response){
+            onreadystatechange: function(response) {
+                if (response.readyState === 4) {
+                    if (response.status == 200) {
 
-    console.log("url ===== " + url);
+                        var range = document.createRange();
+                        range.setStartAfter(document.body);
+                        var xhr_frag = range.createContextualFragment(response.responseText);
+                        var xhr_doc = document.implementation.createDocument(null, 'html', null);
+                        xhr_doc.adoptNode(xhr_frag);
+                        xhr_doc.documentElement.appendChild(xhr_frag);
 
-    GM.xmlHttpRequest({
-        method: 'GET',
-        url: url,
-        headers: {
-            'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
-            'Accept': 'application/atom+xml,application/xml,text/xml',
-        },
-        //onload: function(response){
-        onreadystatechange: function(response) {
-            if (response.readyState === 4) {
-                if (response.status == 200) {
-
-                    var range = document.createRange();
-                    range.setStartAfter(document.body);
-                    var xhr_frag = range.createContextualFragment(response.responseText);
-                    var xhr_doc = document.implementation.createDocument(null, 'html', null);
-                    xhr_doc.adoptNode(xhr_frag);
-                    xhr_doc.documentElement.appendChild(xhr_frag);
-
-                    console.log("callinng testName");
-                    var testName = getData(xhr_doc,hostnames);
-                }
-            }}
-    });
+                        console.log("callinng testName");
+                        var testName = getData(xhr_doc,hostnames);
+                    }
+                }}
+        });
+    }
 }
 
 /*
@@ -301,7 +303,6 @@ function getGameImages(){
 }
 
 function getImages(doc){
-
     var mytable = doc.getElementsByClassName("menugrplink");
     var table_length = mytable.length;
     var section_string;
@@ -332,7 +333,6 @@ function getImages(doc){
             key_array.push(map_key);
             value_array.push(map_value);
             map.set(map_key, map_value);
-
         }
     }
     for (var k = 0; k < key_array.length; k++) {
@@ -340,7 +340,6 @@ function getImages(doc){
         option.value = option.text = key_array[k];
         dropdownlist.add(option);
     }
-
 }
 
 function getData(doc,hostnames){
@@ -376,6 +375,10 @@ function getData(doc,hostnames){
             string_array = string_array + array_ip[array_ip.length-1] + " " + array_hostname[array_hostname.length-1] + "\n";
         }
         else if(option_string == scraping_array_string[2]){
+            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + " " + array_location[array_location.length-1] +
+                " " + array_provider[array_provider.length-1] + "\n";
+        }
+        else if(option_string == scraping_array_string[3]){
             string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + " " + array_location[array_location.length-1] +
                 " " + array_provider[array_provider.length-1] + " " + array_reference[array_reference.length-1] + "\n";
         }
@@ -527,6 +530,7 @@ function images_button(){
 function scraping_dropdown(){
     scraping_array_string.push("hostnames ip");
     scraping_array_string.push("ip hostnames");
+    scraping_array_string.push("hostnames ip location dc");
     scraping_array_string.push("hostnames ip location dc reference");
     for (var k = 0; k < scraping_array_string.length; k++) {
         option = document.createElement('option');
