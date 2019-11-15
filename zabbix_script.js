@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.1
+// @version      0.1.8.2
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -53,7 +53,7 @@ var isBlink = (isChrome || isOpera) && !!window.CSS;
 
 // variables
 var option;
-var map= new Map();
+var map = new Map();
 var string_array = "";
 var scraping_array_string = [];
 var select_options;
@@ -243,7 +243,7 @@ function getDeviceInfo(){
 }
 
 /*
-Desc: This function gets the game images and the version number. You can simply check the latest version of game images
+Desc: This function gets the game images and the version number from gameforge. You can simply check the latest version of game images on textarea
 */
 function getImageURL(section_id){
     console.log("getImageURL called");
@@ -260,7 +260,6 @@ function getImageURL(section_id){
         onreadystatechange: function(response) {
             if (response.readyState === 4) {
                 if (response.status == 200) {
-
                     var range = document.createRange();
                     range.setStartAfter(document.body);
                     var xhr_frag = range.createContextualFragment(response.responseText);
@@ -314,6 +313,7 @@ function getImages(doc){
 
     for(var i =0; i< table_length; i++){
         map_key = mytable[i].childNodes[0].title;
+        //Browser checking
         if(isChrome){
             section_string = mytable[i].childNodes[0].href.replace(string_sectionid_chrome,"");
         }
@@ -357,7 +357,7 @@ function getData(doc,hostnames){
     console.log(myTable);
 
     //check dropdownlist_scraping option here
-    option_string = select_options;
+    option_string = select_options; //option_string is local variable
     console.log("scraping option = " + option_string);
 
     string_array = "";
@@ -387,30 +387,26 @@ function getData(doc,hostnames){
 }
 
 function getImagesdata(doc){
-
-    console.log("in getR5ata");
-
+    console.log("in getImagesdata");
+    var name_array = [];
+    var image_array = [];
+    var version_array=[];
+    var my_array = [];
+  	var my_string = "";
     var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
-	var name_array = [];
-  	var r5_string = "";
     var rowLength = myTable[0].rows.length;
 
-    var parseSplit;
-    var parseArrayR5 = [];
+    //Result to the Jason file. Check console log for the result
     var jsonStr = '{"Images":[{"game image":"", "version":""}]}';
     var obj = JSON.parse(jsonStr);
 
-    var image_array = [];
-    var version_array=[];
     for(var i=1; i<rowLength;i++){
     	name_array.push(oTable.rows.item(i).cells[1].innerText);
     	version_array.push(oTable.rows.item(i).cells[2].innerText);
     }
 
-  	var my_array = [];
-  	var my_string = "";
   	obj['Images'].pop();
   	for(i=0; i<name_array.length; i++){
       my_array.push(name_array[i] + " " + version_array[i]);
@@ -511,10 +507,11 @@ function logzio_button(){
 function scraping_button(){
     var dropdownlist_scraping_id = document.getElementById("dropdownlist_scraping");
     select_options = dropdownlist_scraping_id.options[dropdownlist_scraping_id.selectedIndex].value;
-    console.log("option ========================== " + select_options);
+    console.log("option = " + select_options);
 	getDeviceInfo();
 }
 
+//For testing..
 function r5image_button(){
   //getImageURL();
 }
