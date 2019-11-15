@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.7.3
+// @version      0.1.7.4
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -28,11 +28,21 @@ var url_deleted_machines2 = ";MachinesFilter_filter_deleted_options=1;MachinesFi
 var url_logzio1 = "https://app-eu.logz.io/#/dashboard/kibana/discover?_a=(columns:!(message),index:%5BlogzioCustomerIndex%5DYYMMDD,interval:auto,query:(language:lucene,query:%22";
 var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-4h,mode:quick,to:now))&accountIds=31168&accountIds=31077&accountIds=62777&accountIds=54571&accountIds=31166&accountIds=97966&accountIds=82670&accountIds=30901";
 var url_image_menu = "https://gameforge.multiplay.co.uk/events/Online/toolbar.html?sectionid=6;section=;modid=0;admin=0";
-var string_sectionid = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
+var string_sectionid_firefox = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
+var string_sectionid_chrome = "https://zabbix.multiplay.co.uk/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
 
 // game image
 var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=";
 var game_images2 = ";event=Online;block=1";
+
+//browser relibalbe detection
+var isChrome = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+var isFirefox = typeof InstallTrigger !== 'undefined';
+console.log("isChrome? " + isChrome);
+console.log("isFirefox? " + isFirefox);
+
+var option;
+var map= new Map();
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -135,7 +145,6 @@ r5image.onclick = r5image_button;
 r5image.setAttribute("style", style_default_button);
 //document.getElementById("li6").appendChild(r5image);
 
-///testing...
 var li7 = document.createElement("li");
 li7.setAttribute("id", "li7");
 li7.setAttribute("style", "margin-top: 0.3%");
@@ -143,7 +152,6 @@ li6.parentNode.appendChild(li7);
 var dropdownlist = document.createElement("SELECT");
 dropdownlist.setAttribute("id", "dropdownlist");
 dropdownlist.setAttribute("style", style_dropdownlist);
-
 document.getElementById("li7").appendChild(dropdownlist);
 
 var li8 = document.createElement("li");
@@ -156,9 +164,6 @@ images.value="Load Images";
 images.onclick = images_button;
 images.setAttribute("style", style_default_button);
 document.getElementById("li8").appendChild(images);
-
-var option;
-var map= new Map();
 getGameImages();
 
 
@@ -267,12 +272,19 @@ function getImages(doc){
     var section_string;
     var map_key;
     var map_value;
-    var key_array=[];
-    var value_array=[];
+    var key_array = [];
+    var value_array = [];
+    var table_string = [];
 
     for(var i =0; i< table_length; i++){
         map_key = mytable[i].childNodes[0].title;
-        section_string = mytable[i].childNodes[0].href.replace(string_sectionid,"");
+        if(isChrome){
+            section_string = mytable[i].childNodes[0].href.replace(string_sectionid_chrome,"");
+        }
+        else if(isFirefox){
+            section_string = mytable[i].childNodes[0].href.replace(string_sectionid_firefox,"");
+        }
+
         if(section_string[3]==";"){//filling floor section id is 934
             map_value = section_string.substring(0,3);
         }
@@ -285,6 +297,7 @@ function getImages(doc){
             key_array.push(map_key);
             value_array.push(map_value);
             map.set(map_key, map_value);
+
         }
     }
     for (var k = 0; k < key_array.length; k++) {
@@ -292,6 +305,7 @@ function getImages(doc){
         option.value = option.text = key_array[k];
         dropdownlist.add(option);
     }
+
 }
 
 function getData(doc,hostnames){
@@ -366,7 +380,7 @@ function getImagesdata(doc){
 function gotogameforge_machines()
 {
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,","); 
+    hostnames = hostnames.replace(/\n/g,",");
     var gameforge = url_gameforge_hostname + hostnames
     if(hostnames != ""){
         window.open(gameforge,'_blank');
