@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.7.4
+// @version      0.1.8
 // @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -36,13 +36,27 @@ var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=In
 var game_images2 = ";event=Online;block=1";
 
 //browser relibalbe detection
-var isChrome = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+// Opera 8.0+
+var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+// Firefox 1.0+
 var isFirefox = typeof InstallTrigger !== 'undefined';
-console.log("isChrome? " + isChrome);
-console.log("isFirefox? " + isFirefox);
+// Safari 3.0+ "[object HTMLElementConstructor]"
+var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+// Internet Explorer 6-11
+var isIE = /*@cc_on!@*/false || !!document.documentMode;
+// Edge 20+
+var isEdge = !isIE && !!window.StyleMedia;
+// Chrome 1 - 71
+var isChrome = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+// Blink engine detection
+var isBlink = (isChrome || isOpera) && !!window.CSS;
 
+// variables
 var option;
 var map= new Map();
+var string_array = "";
+var scraping_array_string = [];
+var select_options;
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -57,6 +71,7 @@ if(!textArea){
 /*
 Creates list items and adds buttons
 */
+//GF Machines (hostname) button in li
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
 li1.setAttribute("style", "margin-top: 1%");
@@ -68,6 +83,7 @@ machines.setAttribute("style", style_default_button);
 machines.onclick = gotogameforge_machines;
 document.getElementById("li1").appendChild(machines);
 
+//GF Machines (ip) button in li
 var li1a = document.createElement("li");
 li1a.setAttribute("id", "li1a");
 li1a.setAttribute("style", "margin-top: 0.3%");
@@ -79,6 +95,7 @@ machines_ip.setAttribute("style", style_default_button);
 machines_ip.onclick = gotogameforge_machinesip;
 document.getElementById("li1a").appendChild(machines_ip);
 
+// Procurement(hostname) button in li
 var li2 = document.createElement("li");
 li2.setAttribute("id", "li2");
 li2.setAttribute("style", "margin-top: 0.3%");
@@ -90,6 +107,7 @@ procurement.setAttribute("style", style_default_button);
 procurement.onclick = gotogameforge_procurement;
 document.getElementById("li2").appendChild(procurement);
 
+//Procurement (ip) button in li
 var li2a = document.createElement("li");
 li2a.setAttribute("id", "li2a");
 li2a.setAttribute("style", "margin-top: 0.3%");
@@ -101,6 +119,7 @@ procurement_ip.setAttribute("style", style_default_button);
 procurement_ip.onclick = gotogameforge_procurementip;
 document.getElementById("li2a").appendChild(procurement_ip);
 
+//GF Deleted button in li
 var li3 = document.createElement("li");
 li3.setAttribute("id", "li3");
 li3.setAttribute("style", "margin-top: 0.3%");
@@ -112,6 +131,7 @@ deleted.onclick = deleted_button;
 deleted.setAttribute("style", style_orange);
 document.getElementById("li3").appendChild(deleted);
 
+//Logzio button in li
 var li4 = document.createElement("li");
 li4.setAttribute("id", "li4");
 li4.setAttribute("style", "margin-top: 0.3%");
@@ -123,10 +143,22 @@ logzio.onclick = logzio_button;
 logzio.setAttribute("style", style_lightblue);
 document.getElementById("li4").appendChild(logzio);
 
+//testing
+var li4a = document.createElement("li");
+li4a.setAttribute("id", "li4a");
+li4a.setAttribute("style", "margin-top: 1%");
+li4.parentNode.appendChild(li4a);
+var dropdownlist_scraping = document.createElement("SELECT");
+dropdownlist_scraping.setAttribute("id", "dropdownlist_scraping");
+dropdownlist_scraping.setAttribute("style", style_dropdownlist);
+document.getElementById("li4a").appendChild(dropdownlist_scraping);
+scraping_dropdown();
+
+//Scraping button in li
 var li5 = document.createElement("li");
 li5.setAttribute("id", "li5");
 li5.setAttribute("style", "margin-top: 0.3%");
-li4.parentNode.appendChild(li5);
+li4a.parentNode.appendChild(li5);
 var scraping =document.createElement("input");
 scraping.type="button";
 scraping.value="Scraping";
@@ -134,6 +166,7 @@ scraping.onclick = scraping_button;
 scraping.setAttribute("style", style_default_button);
 document.getElementById("li5").appendChild(scraping);
 
+//r5image button in li
 var li6 = document.createElement("li");
 li6.setAttribute("id", "li6");
 li6.setAttribute("style", "margin-top: 0.3%");
@@ -145,6 +178,7 @@ r5image.onclick = r5image_button;
 r5image.setAttribute("style", style_default_button);
 //document.getElementById("li6").appendChild(r5image);
 
+//select in li
 var li7 = document.createElement("li");
 li7.setAttribute("id", "li7");
 li7.setAttribute("style", "margin-top: 0.3%");
@@ -154,6 +188,7 @@ dropdownlist.setAttribute("id", "dropdownlist");
 dropdownlist.setAttribute("style", style_dropdownlist);
 document.getElementById("li7").appendChild(dropdownlist);
 
+//Load images button in li
 var li8 = document.createElement("li");
 li8.setAttribute("id", "li8");
 li8.setAttribute("style", "margin-top: 0.3%");
@@ -173,6 +208,7 @@ Functions
 function getDeviceInfo(){
     console.log("getDeviceInfo called");
     var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
+    hostnames = hostnames.replace(/\n/g,",");//
     var url = url_procurement_hostname + hostnames;
     if(hostnames == ""){window.alert("Please provide the info");}
 
@@ -198,7 +234,6 @@ function getDeviceInfo(){
                     xhr_doc.documentElement.appendChild(xhr_frag);
 
                     console.log("callinng testName");
-
                     var testName = getData(xhr_doc,hostnames);
                 }
             }}
@@ -309,34 +344,43 @@ function getImages(doc){
 }
 
 function getData(doc,hostnames){
+   var myTable = doc.getElementsByClassName("itemList");
+    myTable[0].setAttribute("id", "myTable");
+    var oTable = myTable[0];
+	var array_hostname = [];
+	var array_ip = [];
+	var array_location = [];
+	var array_provider = [];
+	var array_reference = [];
+	var array_print = [];
+    var rowLength = myTable[0].rows.length;
+    var option_string;
+    console.log(myTable);
 
-    console.log("getData called, hostnames= " + hostnames);
-    var data = doc.getElementsByClassName('scrolltable');
-  	var data_array = data[0].innerText.split("\n");
+    //check dropdownlist_scraping option here
+    option_string = select_options;
+    console.log("scraping option = " + option_string);
 
-  	var my_array = [];
-
-  	for(var i=0; i < data_array.length; i++){
-    	if(data_array[i]==""){}
-      else if(data_array[i]=="\t"){}
-      else if(data_array[i]=="\t\t"){}
-      else{
-      	my_array.push(data_array[i].trim());
-      }
+    string_array = "";
+    for(var i=1; i<rowLength-1;i++){
+    	array_hostname.push(oTable.rows.item(i).cells[2].innerText);
+    	array_ip.push(oTable.rows.item(i).cells[3].innerText);
+    	array_location.push(oTable.rows.item(i).cells[4].innerText);
+    	array_provider.push(oTable.rows.item(i).cells[5].innerText);
+    	array_reference.push(oTable.rows.item(i).cells[9].innerText);
+    	array_print.push(array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1]);
+        if(option_string == scraping_array_string[0]){
+            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + "\n";
+        }
+        else if(option_string == scraping_array_string[1]){
+            string_array = string_array + array_ip[array_ip.length-1] + " " + array_hostname[array_hostname.length-1] + "\n";
+        }
+        else if(option_string == scraping_array_string[2]){
+            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + " " + array_location[array_location.length-1] +
+                " " + array_provider[array_provider.length-1] + " " + array_reference[array_reference.length-1] + "\n";
+        }
     }
-
-    //testing...
-  	//2,3,4,5,9
-	textAreaDiv.value = "ip: " + my_array[3] + "\nhostname: " + my_array[2] + "\nlocation: " + my_array[4] + "\nDC: " + my_array[5] + "\nreference: " + my_array[9];
-  	var t_ip = document.createTextNode(my_array[3]);
-    //td2.appendChild(t_ip);
-
-  	var t_dc = document.createTextNode(my_array[5]);
-    //td4.appendChild(t_dc);
-
-  	var t_ref = document.createTextNode(my_array[9]);
-    //td5.appendChild(t_ref);
-
+    textAreaDiv.value = string_array;
 }
 
 function getImagesdata(doc){
@@ -462,8 +506,10 @@ function logzio_button(){
 }
 
 function scraping_button(){
+    var dropdownlist_scraping_id = document.getElementById("dropdownlist_scraping");
+    select_options = dropdownlist_scraping_id.options[dropdownlist_scraping_id.selectedIndex].value;
+    console.log("option ========================== " + select_options);
 	getDeviceInfo();
-
 }
 
 function r5image_button(){
@@ -476,4 +522,15 @@ function images_button(){
     var strUser = image_name.options[image_name.selectedIndex].value;
     var section_id = map.get(strUser);
     getImageURL(section_id);
+}
+
+function scraping_dropdown(){
+    scraping_array_string.push("hostnames ip");
+    scraping_array_string.push("ip hostnames");
+    scraping_array_string.push("hostnames ip location dc reference");
+    for (var k = 0; k < scraping_array_string.length; k++) {
+        option = document.createElement('option');
+        option.value = option.text = scraping_array_string[k];
+        dropdownlist_scraping.add(option);
+    }
 }
