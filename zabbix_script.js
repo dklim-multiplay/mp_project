@@ -2,7 +2,7 @@
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
 // @version      0.1.8.2
-// @description  This script adds text area and buttons on the left. It helps to find machine information and saves searching time.
+// @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
 // @grant        GM.xmlHttpRequest
@@ -321,7 +321,7 @@ function getImages(doc){
             section_string = mytable[i].childNodes[0].href.replace(string_sectionid_firefox,"");
         }
 
-        if(section_string[3]==";"){//filling floor section id is 934
+        if(section_string[3]==";"){//filling floor section id is xxx
             map_value = section_string.substring(0,3);
         }
         else{
@@ -346,41 +346,40 @@ function getData(doc,hostnames){
    var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
-	var array_hostname = [];
-	var array_ip = [];
-	var array_location = [];
-	var array_provider = [];
-	var array_reference = [];
-	var array_print = [];
     var rowLength = myTable[0].rows.length;
     var option_string;
-    console.log(myTable);
-
+    var my_hostname;
+    var my_ip;
+    var my_location;
+    var my_dc;
+    var my_reference;
+    var class_array = [];
     //check dropdownlist_scraping option here
     option_string = select_options; //option_string is local variable
-    console.log("scraping option = " + option_string);
+    //console.log("scraping option = " + option_string);
 
     string_array = "";
     for(var i=1; i<rowLength-1;i++){
-    	array_hostname.push(oTable.rows.item(i).cells[2].innerText);
-    	array_ip.push(oTable.rows.item(i).cells[3].innerText);
-    	array_location.push(oTable.rows.item(i).cells[4].innerText);
-    	array_provider.push(oTable.rows.item(i).cells[5].innerText);
-    	array_reference.push(oTable.rows.item(i).cells[9].innerText);
-    	array_print.push(array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1]);
+        my_hostname = oTable.rows.item(i).cells[2].innerText;
+        my_ip = oTable.rows.item(i).cells[3].innerText;
+        my_location = oTable.rows.item(i).cells[4].innerText;
+        my_dc = oTable.rows.item(i).cells[5].innerText;
+        my_reference = oTable.rows.item(i).cells[9].innerText;
+        var myMachine = new Machine(my_hostname, my_ip, my_location, my_dc, my_reference);
+        class_array.push(myMachine);
+
         if(option_string == scraping_array_string[0]){
-            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + "\n";
+            string_array = string_array + class_array[class_array.length-1].printHostnameIP();
+            console.log("string array = " + string_array);
         }
         else if(option_string == scraping_array_string[1]){
-            string_array = string_array + array_ip[array_ip.length-1] + " " + array_hostname[array_hostname.length-1] + "\n";
+            string_array = string_array + class_array[class_array.length-1].printIPHostname();
         }
         else if(option_string == scraping_array_string[2]){
-            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + " " + array_location[array_location.length-1] +
-                " " + array_provider[array_provider.length-1] + "\n";
+            string_array = string_array + class_array[class_array.length-1].printHostnameIPLocationDC();
         }
         else if(option_string == scraping_array_string[3]){
-            string_array = string_array + array_hostname[array_hostname.length-1] + " " + array_ip[array_ip.length-1] + " " + array_location[array_location.length-1] +
-                " " + array_provider[array_provider.length-1] + " " + array_reference[array_reference.length-1] + "\n";
+            string_array = string_array + class_array[class_array.length-1].printMachine();
         }
     }
     textAreaDiv.value = string_array;
@@ -507,7 +506,7 @@ function logzio_button(){
 function scraping_button(){
     var dropdownlist_scraping_id = document.getElementById("dropdownlist_scraping");
     select_options = dropdownlist_scraping_id.options[dropdownlist_scraping_id.selectedIndex].value;
-    console.log("option = " + select_options);
+    //console.log("option = " + select_options);
 	getDeviceInfo();
 }
 
@@ -534,4 +533,61 @@ function scraping_dropdown(){
         option.value = option.text = scraping_array_string[k];
         dropdownlist_scraping.add(option);
     }
+}
+
+class Machine{
+	constructor(hostname,ip,location,dc,reference){
+		this.hostname=hostname;
+		this.ip=ip;
+		this.location=location;
+		this.dc=dc;
+		this.reference=reference;
+	}
+
+	printMachine(){
+		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + " " + this.reference + "\n";
+	}
+   	printHostnameIP(){
+       		return this.hostname + " " + this.ip + "\n";
+   	}
+	printIPHostname(){
+		return this.ip + " " + this.hostname + "\n";
+	}
+	printHostnameIPLocationDC(){
+		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + "\n";
+	}
+	printMachine(){
+		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + " " + this.reference + "\n";
+	}
+
+	get getHostname(){
+		return this.hostname;
+	}
+	set setHostname(hostname){
+		this.hostname = hostname;
+	}
+	get getIP(){
+		return this.ip;
+	}
+	set setIP(ip){
+		this.ip = ip;
+	}
+	get getLocation(){
+		return this.location;
+	}
+	set setLocation(location){
+		this.location = location;
+	}
+	get getDC(){
+		return this.dc;
+	}
+	set setDC(dc){
+		this.dc = dc;
+	}
+	get getReference(){
+		return this.reference;
+	}
+	set setReference(reference){
+		this.reference = reference;
+	}
 }
