@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.3
+// @version      0.1.8.4
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -56,7 +56,16 @@ var option;
 var map = new Map();
 var string_array = "";
 var scraping_array_string = [];
+var format_array_string = [];
 var select_options;
+
+// regex
+var hostname_rx = /^([a-z0-9]+-)+(\.|[a-z0-9]+)+$/;
+var ip4_rx = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/;
+var username_rx = /^([aA]dmin(istrator)?|root|[uU]ser)/;
+var password_rx = /^(?=.*[a-z])(?=.*[A-Z])\S{8,}/;
+var uni_rx;
+var reference_rx;
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -78,52 +87,28 @@ li1.setAttribute("style", "margin-top: 1%");
 textAreaDiv.parentNode.appendChild(li1);///
 var machines=document.createElement("input");
 machines.type="button";
-machines.value="GF Machines (hostname)";
+machines.value="GF Machines";
 machines.setAttribute("style", style_default_button);
 machines.onclick = gotogameforge_machines;
 document.getElementById("li1").appendChild(machines);
-
-//GF Machines (ip) button in li
-var li1a = document.createElement("li");
-li1a.setAttribute("id", "li1a");
-li1a.setAttribute("style", "margin-top: 0.3%");
-textAreaDiv.parentNode.appendChild(li1a);///
-var machines_ip=document.createElement("input");
-machines_ip.type="button";
-machines_ip.value="GF Machines (ip)";
-machines_ip.setAttribute("style", style_default_button);
-machines_ip.onclick = gotogameforge_machinesip;
-document.getElementById("li1a").appendChild(machines_ip);
 
 // Procurement(hostname) button in li
 var li2 = document.createElement("li");
 li2.setAttribute("id", "li2");
 li2.setAttribute("style", "margin-top: 0.3%");
-li1a.parentNode.appendChild(li2);
+li1.parentNode.appendChild(li2);
 var procurement=document.createElement("input");
 procurement.type="button";
-procurement.value="Procurement (hostname)";
+procurement.value="GF Procurement";
 procurement.setAttribute("style", style_default_button);
 procurement.onclick = gotogameforge_procurement;
 document.getElementById("li2").appendChild(procurement);
-
-//Procurement (ip) button in li
-var li2a = document.createElement("li");
-li2a.setAttribute("id", "li2a");
-li2a.setAttribute("style", "margin-top: 0.3%");
-li2.parentNode.appendChild(li2a);
-var procurement_ip=document.createElement("input");
-procurement_ip.type="button";
-procurement_ip.value="Procurement (ip)";
-procurement_ip.setAttribute("style", style_default_button);
-procurement_ip.onclick = gotogameforge_procurementip;
-document.getElementById("li2a").appendChild(procurement_ip);
 
 //GF Deleted button in li
 var li3 = document.createElement("li");
 li3.setAttribute("id", "li3");
 li3.setAttribute("style", "margin-top: 0.3%");
-li2a.parentNode.appendChild(li3);
+li2.parentNode.appendChild(li3);
 var deleted = document.createElement("input");
 deleted.type = "button";
 deleted.value = "GF Deleted";
@@ -201,54 +186,67 @@ images.setAttribute("style", style_default_button);
 document.getElementById("li8").appendChild(images);
 getGameImages();
 
+var li8a = document.createElement("li");
+li8a.setAttribute("id", "li8a");
+li8a.setAttribute("style", "margin-top: 2%");
+li8.parentNode.appendChild(li8a);
+var dropdownlist_format = document.createElement("SELECT");
+dropdownlist_format.setAttribute("id", "dropdownlist_format");
+dropdownlist_format.setAttribute("style", style_dropdownlist);
+document.getElementById("li8a").appendChild(dropdownlist_format);
+format_dropdown();
+
+//tseting..
+var li9 = document.createElement("li");
+li9.setAttribute("id", "li9");
+li9.setAttribute("style", "margin-top: 0.3%");
+li8a.parentNode.appendChild(li9);
+var formatting = document.createElement("input");
+formatting.type = "button";
+formatting.value = "Print CSV";
+formatting.onclick = formatting_button;
+formatting.setAttribute("style", style_default_button);
+document.getElementById("li9").appendChild(formatting);
 
 /*
 Functions
 */
-function getDeviceInfo(){
+function getDeviceInfo(data,url){
     console.log("getDeviceInfo called");
-    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");//
-    var url = url_procurement_hostname + hostnames;
-    if(hostnames == ""){
-        window.alert("Please provide the info");
-    }
-    else{
-        console.log("url ===== " + url);
-        GM.xmlHttpRequest({
-            method: 'GET',
-            url: url,
-            headers: {
-                'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
-                'Accept': 'application/atom+xml,application/xml,text/xml',
-            },
-            //onload: function(response){
-            onreadystatechange: function(response) {
-                if (response.readyState === 4) {
-                    if (response.status == 200) {
+    console.log("url ===== " + url);
 
-                        var range = document.createRange();
-                        range.setStartAfter(document.body);
-                        var xhr_frag = range.createContextualFragment(response.responseText);
-                        var xhr_doc = document.implementation.createDocument(null, 'html', null);
-                        xhr_doc.adoptNode(xhr_frag);
-                        xhr_doc.documentElement.appendChild(xhr_frag);
+    GM.xmlHttpRequest({
+        method: 'GET',
+        url: url,
+        headers: {
+            'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
+            'Accept': 'application/atom+xml,application/xml,text/xml',
+        },
+        //onload: function(response){
+        onreadystatechange: function(response) {
+            if (response.readyState === 4) {
+                if (response.status == 200) {
 
-                        console.log("callinng testName");
-                        var testName = getData(xhr_doc,hostnames);
-                    }
-                }}
-        });
-    }
+                    var range = document.createRange();
+                    range.setStartAfter(document.body);
+                    var xhr_frag = range.createContextualFragment(response.responseText);
+                    var xhr_doc = document.implementation.createDocument(null, 'html', null);
+                    xhr_doc.adoptNode(xhr_frag);
+                    xhr_doc.documentElement.appendChild(xhr_frag);
+
+                    console.log("callinng testName");
+                    var testName = getData(xhr_doc,data);
+                }
+            }}
+    });
 }
 
 /*
 Desc: This function gets the game images and the version number from gameforge. You can simply check the latest version of game images on textarea
 */
-function getImageURL(section_id){
+function getImageURL(section_id,url){
     console.log("getImageURL called");
-    var url = game_images1 + section_id + game_images2;
-    console.log(section_id);
+
     GM.xmlHttpRequest({
         method: 'GET',
         url: url,
@@ -276,10 +274,9 @@ function getImageURL(section_id){
 
 function getGameImages(){
     console.log("getGameImages called");
-    var url = url_image_menu;
     GM.xmlHttpRequest({
         method: 'GET',
-        url: url,
+        url: url_image_menu,
         headers: {
             'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
             'Accept': 'application/atom+xml,application/xml,text/xml',
@@ -421,54 +418,40 @@ function getImagesdata(doc){
 
 function gotogameforge_machines()
 {
-    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");
-    var gameforge = url_gameforge_hostname + hostnames
-    if(hostnames != ""){
-        window.open(gameforge,'_blank');
+    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+    data = data.replace(/\n/g,",");
+    var gameforge;
+    if(data == ""){
+        alert("Type data");
     }
     else{
-        alert("Type hostname");
-    }
-}
-
-function gotogameforge_machinesip()
-{
-    var ips = document.getElementsByTagName("TEXTAREA")[0].value;
-    ips = ips.replace(/\n/g,",");
-    var gameforge = url_gameforge_ip + ips;
-    if(ips != ""){
+        if(data.match(ip4_rx)){
+             gameforge = url_gameforge_ip + data;
+        }
+        else{
+             gameforge = url_gameforge_hostname + data;
+        }
         window.open(gameforge,'_blank');
-    }
-    else{
-        alert("Type ip address");
     }
 }
 
 function gotogameforge_procurement()
 {
-    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");
-    var gameforge = url_procurement_hostname + hostnames;
+    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+    data = data.replace(/\n/g,",");
+    var gameforge = url_procurement_hostname + data;
 
-    if(hostnames!=""){
+    if(data == ""){
+        alert("Type hostname");
+    }
+    else{
+        if(data.match(ip4_rx)){
+             gameforge = url_procurement_ip + data;
+        }
+        else{
+             gameforge = url_procurement_hostname + data;
+        }
         window.open(gameforge,'_blank');
-    }
-    else{
-        alert("Type hostname");
-    }
-}
-
-function gotogameforge_procurementip()
-{
-    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");
-    var gameforge_ip= url_procurement_ip + hostnames;
-    if(hostnames!=""){
-        window.open(gameforge_ip,'_blank');
-    }
-    else{
-        alert("Type hostname");
     }
 }
 
@@ -506,8 +489,25 @@ function logzio_button(){
 function scraping_button(){
     var dropdownlist_scraping_id = document.getElementById("dropdownlist_scraping");
     select_options = dropdownlist_scraping_id.options[dropdownlist_scraping_id.selectedIndex].value;
-    //console.log("option = " + select_options);
-	getDeviceInfo();
+    //testing
+    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+    var url;
+    data = data.replace(/\n/g,",");//
+
+    if(data == ""){
+        window.alert("Please provide the info");
+    }
+    //testing
+    else{
+        console.log("text area valu ======== " + data);
+        if(data.match(ip4_rx)){
+             url = url_procurement_ip + data;
+        }
+        else{
+             url = url_procurement_hostname + data;
+        }
+        getDeviceInfo(data,url);
+    }
 }
 
 //For testing..
@@ -520,7 +520,9 @@ function images_button(){
     var image_name = document.getElementById("dropdownlist");
     var strUser = image_name.options[image_name.selectedIndex].value;
     var section_id = map.get(strUser);
-    getImageURL(section_id);
+    var url = game_images1 + section_id + game_images2;
+    console.log(section_id);
+    getImageURL(section_id, url);
 }
 
 function scraping_dropdown(){
@@ -533,6 +535,74 @@ function scraping_dropdown(){
         option.value = option.text = scraping_array_string[k];
         dropdownlist_scraping.add(option);
     }
+}
+
+function format_dropdown(){
+    format_array_string.push("ip,username,password");
+    format_array_string.push("ip,username,\"password\"");
+    format_array_string.push("ip,hostname,username,password");
+    for (var k = 0; k < format_array_string.length; k++) {
+        option = document.createElement('option');
+        option.value = option.text = format_array_string[k];
+        dropdownlist_format.add(option);
+    }
+}
+
+function formatting_button(){
+    console.log("formatting button clicked");
+    var machine_info = document.getElementsByTagName("TEXTAREA")[0].value;
+    var split_machine = machine_info.split("\n");
+    var split_data;
+    var my_uni = "";
+    var my_ref = "";
+    var my_hostname = "";
+    var my_ip = "";
+    var my_username = "";
+    var my_password = "";
+    var machine_list = [];
+
+
+    var dropdownlist_format_id = document.getElementById("dropdownlist_format");
+    select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
+    console.log("select = " + select_options);
+    var csv_string="";
+
+    for(var i = 0; i < split_machine.length; i++){
+        split_data = split_machine[i].split(/(, |\s+)/);
+        for(var j = 0; j < split_data.length; j++){
+            if(split_data[j].match(/^(UNI)[-]?\d*/)){ // need to edit this ex) UNI-xxxxxx
+                my_uni = split_data[j];
+            }
+            else if(split_data[j].match(username_rx)){
+                my_username = split_data[j];
+            }
+            else if(split_data[j].match(hostname_rx)){ // need to edit this ex) gg-bri78. gg-sbri02
+                my_hostname = split_data[j];
+            }
+            else if(split_data[j].match(ip4_rx)){ // need to figure out how to handle IPMI and IP reference
+                my_ip = split_data[j];
+            }
+            else if(split_data[j].match(password_rx)){ //this checks if the string contains at least one lower and upper case
+                my_password = split_data[j];
+            }
+        }
+        var myMachine = new MachineDeploy(my_hostname, my_ip, my_uni,my_username, my_password);
+        machine_list.push(myMachine);
+        console.log(machine_list);
+    }
+
+    for(var k=0; k < machine_list.length; k++){
+        if(select_options == format_array_string[0]){
+            csv_string = csv_string + machine_list[k].printCSV() + "\n";
+        }
+        else if(select_options == format_array_string[1]){
+            csv_string = csv_string + machine_list[k].printActivisionCSV() + "\n";
+        }
+        else if(select_options == format_array_string[2]){
+            csv_string = csv_string + machine_list[k].printGGGCSV() + "\n";
+        }
+    }
+    textAreaDiv.value = csv_string;
 }
 
 class Machine{
@@ -548,7 +618,7 @@ class Machine{
 		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + " " + this.reference + "\n";
 	}
    	printHostnameIP(){
-       		return this.hostname + " " + this.ip + "\n";
+       	return this.hostname + " " + this.ip + "\n";
    	}
 	printIPHostname(){
 		return this.ip + " " + this.hostname + "\n";
@@ -590,4 +660,25 @@ class Machine{
 	set setReference(reference){
 		this.reference = reference;
 	}
+}
+
+class MachineDeploy extends Machine{
+    constructor(hostname,ip, uni,username,password){
+        super(hostname,ip);
+        this.uni = uni;
+        this.username = username;
+        this.password = password;
+    }
+    show(){
+        return this.printMachine() + " in MachineDeploy";
+    }
+    printCSV(){ //index 0
+        return this.ip + "," + this.username + "," + this.password;
+    }
+    printActivisionCSV(){ //index 1
+        return this.ip + "," + this.username + ",\"" + this.password + "\"";
+    }
+    printGGGCSV(){ //index2
+        return this.ip + "," + this.hostname + "," + this.username + "," + this.password;
+    }
 }
