@@ -358,18 +358,18 @@ function getData(doc,hostnames){
         var myMachine = new Machine(my_hostname, my_ip, my_location, my_dc, my_reference);
         class_array.push(myMachine);
 
-        if(option_string == scraping_array_string[0]){
-            string_array = string_array + class_array[class_array.length-1].printHostnameIP();
+        if(option_string == scraping_array_string[1]){
+            string_array = string_array + class_array[class_array.length-1].printHostnameIP() + "\n";
             console.log("string array = " + string_array);
         }
-        else if(option_string == scraping_array_string[1]){
-            string_array = string_array + class_array[class_array.length-1].printIPHostname();
-        }
         else if(option_string == scraping_array_string[2]){
-            string_array = string_array + class_array[class_array.length-1].printHostnameIPLocationDC();
+            string_array = string_array + class_array[class_array.length-1].printIPHostname()+ "\n";
         }
         else if(option_string == scraping_array_string[3]){
-            string_array = string_array + class_array[class_array.length-1].printMachine();
+            string_array = string_array + class_array[class_array.length-1].printHostnameIPLocationDC()+ "\n";
+        }
+        else if(option_string == scraping_array_string[0]){
+            string_array = string_array + class_array[class_array.length-1].printMachine()+ "\n";
         }
     }
     textAreaDiv.value = string_array;
@@ -527,10 +527,10 @@ function images_button(){
 }
 
 function scraping_dropdown(){
+    scraping_array_string.push("hostnames ip location dc reference");
     scraping_array_string.push("hostnames ip");
     scraping_array_string.push("ip hostnames");
     scraping_array_string.push("hostnames ip location dc");
-    scraping_array_string.push("hostnames ip location dc reference");
     for (var k = 0; k < scraping_array_string.length; k++) {
         option = document.createElement('option');
         option.value = option.text = scraping_array_string[k];
@@ -620,7 +620,7 @@ class Machine{
 	}
 
 	printMachine(){
-		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + " " + this.reference + "\n";
+		return this.hostname + "\n" + this.ip + "\n" + this.location + "\n" + this.dc + "\n" + this.reference + "\n";
 	}
    	printHostnameIP(){
        	return this.hostname + " " + this.ip + "\n";
@@ -631,9 +631,7 @@ class Machine{
 	printHostnameIPLocationDC(){
 		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + "\n";
 	}
-	printMachine(){
-		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + " " + this.reference + "\n";
-	}
+
 
 	get getHostname(){
 		return this.hostname;
