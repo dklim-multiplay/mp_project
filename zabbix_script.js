@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.7
+// @version      0.1.8.8
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -359,14 +359,14 @@ function getData(doc,hostnames){
         class_array.push(myMachine);
 
         if(option_string == scraping_array_string[1]){
-            string_array = string_array + class_array[class_array.length-1].printHostnameIP() + "\n";
+            string_array = string_array + class_array[class_array.length-1].printHostnameIP();
             console.log("string array = " + string_array);
         }
         else if(option_string == scraping_array_string[2]){
-            string_array = string_array + class_array[class_array.length-1].printIPHostname()+ "\n";
+            string_array = string_array + class_array[class_array.length-1].printIPHostname();
         }
         else if(option_string == scraping_array_string[3]){
-            string_array = string_array + class_array[class_array.length-1].printHostnameIPLocationDC()+ "\n";
+            string_array = string_array + class_array[class_array.length-1].printHostnameIPLocationDC();
         }
         else if(option_string == scraping_array_string[0]){
             string_array = string_array + class_array[class_array.length-1].printMachine()+ "\n";
@@ -539,9 +539,9 @@ function scraping_dropdown(){
 }
 
 function format_dropdown(){
-    format_array_string.push("ip,username,password");
-    format_array_string.push("ip,username,\"password\"");
-    format_array_string.push("ip,hostname,username,password");
+    format_array_string.push("ip, username, password");
+    format_array_string.push("ip, username, \"password\"");
+    format_array_string.push("ip, hostname, username, password");
     for (var k = 0; k < format_array_string.length; k++) {
         option = document.createElement('option');
         option.value = option.text = format_array_string[k];
@@ -676,10 +676,10 @@ class MachineDeploy extends Machine{
         return this.printMachine() + " in MachineDeploy";
     }
     printCSV(){ //index 0
-        return this.ip + "," + this.username + "," + this.password;
+        return this.ip + ", " + this.username + ", " + this.password;
     }
     printActivisionCSV(){ //index 1
-        return this.ip + "," + this.username + ",\"" + this.password + "\"";
+        return this.ip + ", " + this.username + ", \"" + this.password + "\"";
     }
     printGGGCSV(){ //index2
         return this.ip + ", " + this.hostname + ", " + this.username + ", " + this.password;
