@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.4
+// @version      0.1.8.5
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -21,6 +21,9 @@ var style_dropdownlist = "position: relative; left: 2%; min-width:12%; max-width
 //url
 var url_gameforge_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=name%23%3A%23";
 var url_gameforge_ip = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=ip%23%3A%23";
+var url_gameforge_mid = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;machineid=";
+var url_gameforge_serverid = "https://gameforge.multiplay.co.uk/cgi-adm/servers.pl?opt=ServersAdminList;event=Online;serverid=";
+var url_gameforge_ref = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=provider_reference%23%3A%23";
 var url_procurement_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=name%23%3A%23";
 var url_procurement_ip = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=ip%23%3A%23";
 var url_deleted_machines1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=name%23%3A%23";
@@ -30,6 +33,7 @@ var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:
 var url_image_menu = "https://gameforge.multiplay.co.uk/events/Online/toolbar.html?sectionid=6;section=;modid=0;admin=0";
 var string_sectionid_firefox = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
 var string_sectionid_chrome = "https://zabbix.multiplay.co.uk/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
+
 
 // game image
 var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=";
@@ -66,6 +70,7 @@ var username_rx = /^([aA]dmin(istrator)?|root|[uU]ser)/;
 var password_rx = /^(?=.*[a-z])(?=.*[A-Z])\S{8,}/;
 var uni_rx;
 var reference_rx;
+var mid_rx = /^\d{6}/;
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -151,23 +156,11 @@ scraping.onclick = scraping_button;
 scraping.setAttribute("style", style_default_button);
 document.getElementById("li5").appendChild(scraping);
 
-//r5image button in li
-var li6 = document.createElement("li");
-li6.setAttribute("id", "li6");
-li6.setAttribute("style", "margin-top: 0.3%");
-li5.parentNode.appendChild(li6);
-var r5image =document.createElement("input");
-r5image.type="button";
-r5image.value="r5image";
-r5image.onclick = r5image_button;
-r5image.setAttribute("style", style_default_button);
-//document.getElementById("li6").appendChild(r5image);
-
 //select in li
 var li7 = document.createElement("li");
 li7.setAttribute("id", "li7");
-li7.setAttribute("style", "margin-top: 0.3%");
-li6.parentNode.appendChild(li7);
+li7.setAttribute("style", "margin-top: 2%");
+li5.parentNode.appendChild(li7);
 var dropdownlist = document.createElement("SELECT");
 dropdownlist.setAttribute("id", "dropdownlist");
 dropdownlist.setAttribute("style", style_dropdownlist);
@@ -428,6 +421,9 @@ function gotogameforge_machines()
         if(data.match(ip4_rx)){
              gameforge = url_gameforge_ip + data;
         }
+        else if(data.match(mid_rx)){
+             gameforge =url_gameforge_mid + data;
+        }
         else{
              gameforge = url_gameforge_hostname + data;
         }
@@ -442,7 +438,7 @@ function gotogameforge_procurement()
     var gameforge = url_procurement_hostname + data;
 
     if(data == ""){
-        alert("Type hostname");
+        alert("Type data");
     }
     else{
         if(data.match(ip4_rx)){
@@ -468,10 +464,20 @@ function deleted_button()
     }
 }
 
-function clear_button()
-{
+function clear_button(){
     textAreaDiv.value='';
 }
+
+
+//testing...
+function copy_all(){
+        var dummy = document.getElementsByTagName("TEXTAREA")[0].value;
+        dummy.select();
+        document.execCommand('copy');
+        dummy.remove();
+}
+//testing...
+
 
 function logzio_button(){
     var uuid = document.getElementsByTagName("TEXTAREA")[0].value;
@@ -510,11 +516,6 @@ function scraping_button(){
     }
 }
 
-//For testing..
-function r5image_button(){
-  //getImageURL();
-}
-
 function images_button(){
     console.log("images button clicked");
     var image_name = document.getElementById("dropdownlist");
@@ -551,6 +552,10 @@ function format_dropdown(){
 function formatting_button(){
     console.log("formatting button clicked");
     var machine_info = document.getElementsByTagName("TEXTAREA")[0].value;
+    if(machine_info == ""){
+        alert("type data");
+    }
+    else{
     var split_machine = machine_info.split("\n");
     var split_data;
     var my_uni = "";
@@ -560,7 +565,6 @@ function formatting_button(){
     var my_username = "";
     var my_password = "";
     var machine_list = [];
-
 
     var dropdownlist_format_id = document.getElementById("dropdownlist_format");
     select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
@@ -603,6 +607,7 @@ function formatting_button(){
         }
     }
     textAreaDiv.value = csv_string;
+    }
 }
 
 class Machine{
