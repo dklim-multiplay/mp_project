@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         formatting
+// @name         Text Formatting
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  try to take over the world!
@@ -7,12 +7,23 @@
 // @match        *
 // @grant        none
 // ==/UserScript==
+
+//index
+var ipmi_index;
+var reference_index;
+var ip_index;
+var password_index;
+
 var format_array_string=[];
 var option;
 var select_options;
 var style_textArea = "min-width: 80%; max-width:80%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 var style_default_button = "position: relative; left: 2%; min-width:20%; max-width:20%";
 var textAreaDiv = document.createElement("TEXTAREA");
+var textField = document.createElement("INPUT");
+textField.setAttribute("type", "text");
+document.body.appendChild(textField);
+
 textAreaDiv.setAttribute("style", style_textArea);
 textAreaDiv.setAttribute("id", "textarea");
 document.body.appendChild(textAreaDiv);
@@ -30,13 +41,54 @@ dropdownlist_format.setAttribute("style", style_default_button);
 document.body.appendChild(dropdownlist_format);
 format_dropdown();
 
+function find_title_index(){
+    var text_string = textField.value;
+
+
+    var split_text_string = text_string.split(",");
+
+    console.log("text = " + split_text_string);
+    console.log("split_text_string length = " + split_text_string.length);
+
+    for(var i = 0 ; i < split_text_string.length; i++){
+        if(split_text_string[i].match(/(Order)?(\s)?([Rr]eference)(\s)?(id|ID)?/)){
+            reference_index = i;
+            console.log("index of reference = " + i);
+        }
+        else if(split_text_string[i].match(/(ipmi|IPMI)(\s)?(ip|IP)?/)){
+            ipmi_index = i; /// ?
+            console.log("index of ipmi = " + i);
+        }
+        else if(split_text_string[i].match(/(IP|ip)(\s)?([aA]ddress)?/)){
+            ip_index = i;
+            console.log("index of ip = " + i);
+
+        }
+        else if(split_text_string[i].match(/([pP]assword)/)){
+            password_index = i;
+            console.log("index of password = " + i);
+        }
+        /*
+        else if(split_text_string[i].match()){
+
+        }
+        else if(split_text_string[i].match()){
+
+        }
+        */
+    }
+}
+
 function mybutton_onclick(){
     console.log("mybutton clicked");
+    find_title_index();
+    console.log("ipmi index ==== " + ipmi_index); //need to figure out when there is no title index*************
+
     var text_string = textAreaDiv.value;
-    console.log(text_string);
+    //console.log("test string = " + text_string + " length = " + text_string.length);
     //var split_text = text_string.split(/(,| )/);
     var split_text = text_string.split("\n");
-    console.log(split_text);
+    //console.log("split text = "+ split_text + " length = " + split_text.length);
     var split_data;
     var my_uni = "";
     var my_ref = "";
@@ -54,17 +106,20 @@ function mybutton_onclick(){
 
     var dropdownlist_format_id = document.getElementById("dropdownlist_format");
     select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
-    console.log("select = " + select_options);
+    //console.log("select = " + select_options);
     for(var t=0; t < format_array_string.length; t++){
         if(select_options == format_array_string[t]){
-            console.log("index of dropdownlist = " + t);
+            //console.log("index of dropdownlist = " + t);
         }
     }
 
     var csv_string="";
         for(var i = 0; i < split_text.length; i++){
-        split_data = split_text[i].split(/(,| )/);
-        //console.log(split_data);
+        //split_data = split_text[i].split(/(,|\s+)/);
+        split_data=split_text[i].split(/,\s?|\s+/);
+        console.log("split data length = "+split_data.length);
+        console.log("split data = " + split_data);
+
         for(var j = 0; j < split_data.length; j++){
             //console.log("j = " + j + " split_data = " + split_data[j]);
             if(split_data[j].match(/^(UNI)\d*/)){
@@ -84,7 +139,12 @@ function mybutton_onclick(){
             }
             else if(split_data[j].match(/^(\d{1,3}.){3}(\d{1,3})/)){
                 //my_ip = my_ip + split_data[j] + " ";/////////
-                my_ip = split_data[j];
+                if(split_data[j] == split_data[ipmi_index]){ /// need to figure out when ther is no test field data at all
+                    console.log("***ipmi ip = " + split_data[j]);
+                }
+                else{
+                    my_ip = split_data[j];
+                }
                 //console.log("myip = " + my_ip);
             }
             //else if (!split_data[j].match(/(\,|\/|(\s+)|(^(\d+)$)|(UNI\d+)|([aA]dministrator|root|admin)|(\d{1,3}.){3}(\d{1,3})|([\w]*-){2}[\d]*)/)){
