@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.8
+// @version      0.1.8.9
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -28,6 +28,8 @@ var url_procurement_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machin
 var url_procurement_ip = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=ip%23%3A%23";
 var url_deleted_machines1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=name%23%3A%23";
 var url_deleted_machines2 = ";MachinesFilter_filter_deleted_options=1;MachinesFilter_filter_value=Yes;MachinesFilter_filter_go=Go";
+var url_deleted_machinesip1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=ip%23%3A%23";
+var url_deleted_machinesip2 = ";MachinesFilter_filter_deleted_options=1;MachinesFilter_filter_value=Yes;MachinesFilter_filter_go=Go";
 var url_logzio1 = "https://app-eu.logz.io/#/dashboard/kibana/discover?_a=(columns:!(message),index:%5BlogzioCustomerIndex%5DYYMMDD,interval:auto,query:(language:lucene,query:%22";
 var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-4h,mode:quick,to:now))&accountIds=31168&accountIds=31077&accountIds=62777&accountIds=54571&accountIds=31166&accountIds=97966&accountIds=82670&accountIds=30901";
 var url_image_menu = "https://gameforge.multiplay.co.uk/events/Online/toolbar.html?sectionid=6;section=;modid=0;admin=0";
@@ -69,8 +71,10 @@ var ip4_rx = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-
 var username_rx = /^([aA]dmin(istrator)?|root|[uU]ser)/;
 var password_rx = /^(?=.*[a-z])(?=.*[A-Z])\S{8,}/;
 var uni_rx;
-var reference_rx;
-var mid_rx = /^\d{6}/;
+var reference_rx = /^((SERV|SAU)?-?)((\d{4,6})|([A-Z0-9]*)|([a-z0-9]*))?(-OR)?$/; //need to figure out -> username, ip, hostname
+var mid_rx = /^\d{6}$/;
+var sid_rx = /^\d{7}$/;
+var split_rx = /,\s?|\s+/;
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -94,6 +98,7 @@ var machines=document.createElement("input");
 machines.type="button";
 machines.value="GF Machines";
 machines.setAttribute("style", style_default_button);
+machines.title =" On textarea above, type hostname(s) or ip(s) or machineid(s) ";
 machines.onclick = gotogameforge_machines;
 document.getElementById("li1").appendChild(machines);
 
@@ -105,6 +110,7 @@ li1.parentNode.appendChild(li2);
 var procurement=document.createElement("input");
 procurement.type="button";
 procurement.value="GF Procurement";
+procurement.title =" On textarea above, type hostname(s) or ip(s) ";
 procurement.setAttribute("style", style_default_button);
 procurement.onclick = gotogameforge_procurement;
 document.getElementById("li2").appendChild(procurement);
@@ -133,7 +139,7 @@ logzio.onclick = logzio_button;
 logzio.setAttribute("style", style_lightblue);
 document.getElementById("li4").appendChild(logzio);
 
-//testing
+//Scraping dropdown list
 var li4a = document.createElement("li");
 li4a.setAttribute("id", "li4a");
 li4a.setAttribute("style", "margin-top: 1%");
@@ -189,7 +195,6 @@ dropdownlist_format.setAttribute("style", style_dropdownlist);
 document.getElementById("li8a").appendChild(dropdownlist_format);
 format_dropdown();
 
-//tseting..
 var li9 = document.createElement("li");
 li9.setAttribute("id", "li9");
 li9.setAttribute("style", "margin-top: 0.3%");
@@ -204,6 +209,17 @@ document.getElementById("li9").appendChild(formatting);
 /*
 Functions
 */
+function dataValidation(){
+    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+    var split_data = data.split(split_rx);
+    if(split_data == ""){
+        alert("Type data");
+    }
+    else{
+        return split_data;
+    }
+}
+
 function getDeviceInfo(data,url){
     console.log("getDeviceInfo called");
     console.log("url ===== " + url);
@@ -411,63 +427,62 @@ function getImagesdata(doc){
 
 function gotogameforge_machines()
 {
-    var data = document.getElementsByTagName("TEXTAREA")[0].value;
-    data = data.replace(/\n/g,",");
+    var data_result = dataValidation();
     var gameforge;
-    if(data == ""){
-        alert("Type data");
+    if(data_result[0].match(ip4_rx)){
+        gameforge = url_gameforge_ip + data_result;
+    }
+
+    else if(data_result[0].match(mid_rx)){
+        gameforge =url_gameforge_mid + data_result;
+    }
+    else if(data_result[0].match(sid_rx)){
+        gameforge = url_gameforge_serverid + data_result;
     }
     else{
-        if(data.match(ip4_rx)){
-             gameforge = url_gameforge_ip + data;
-        }
-        else if(data.match(mid_rx)){
-             gameforge =url_gameforge_mid + data;
-        }
-        else{
-             gameforge = url_gameforge_hostname + data;
-        }
-        window.open(gameforge,'_blank');
+        gameforge = url_gameforge_hostname + data_result;
     }
+    window.open(gameforge,'_blank');
+
 }
 
 function gotogameforge_procurement()
 {
-    var data = document.getElementsByTagName("TEXTAREA")[0].value;
-    data = data.replace(/\n/g,",");
-    var gameforge = url_procurement_hostname + data;
+    var data_result = dataValidation();
+    var gameforge = url_procurement_hostname + data_result;
 
-    if(data == ""){
-        alert("Type data");
+    if(data_result[0].match(ip4_rx)){
+        gameforge = url_procurement_ip + data_result;
     }
     else{
-        if(data.match(ip4_rx)){
-             gameforge = url_procurement_ip + data;
-        }
-        else{
-             gameforge = url_procurement_hostname + data;
-        }
-        window.open(gameforge,'_blank');
+        gameforge = url_procurement_hostname + data_result;
     }
+    window.open(gameforge,'_blank');
 }
 
 function deleted_button()
 {
-    var hostnames = document.getElementsByTagName("TEXTAREA")[0].value;
-    hostnames = hostnames.replace(/\n/g,",");
-    var gameforge = url_deleted_machines1 + hostnames + url_deleted_machines2;
-    if(hostnames!=""){
-        window.open(gameforge,'_blank');
+    var data_result = dataValidation();
+    var gameforge;
+    if(data_result[0].match(ip4_rx)){
+        gameforge = url_deleted_machinesip1 + data_result + url_deleted_machinesip2;
+    }
+    else if(data_result[0].match(mid_rx)){
+        //gameforge =url_gameforge_mid + data_result;
+    }
+    else if(data_result[0].match(sid_rx)){
+        //gameforge = url_gameforge_serverid + data_result;
     }
     else{
-        alert("Type hostname");
+        gameforge = url_deleted_machines1 + data_result + url_deleted_machines2
     }
+    window.open(gameforge,'_blank');
+
 }
 
 function clear_button(){
     textAreaDiv.value='';
 }
-
 
 //testing...
 function copy_all(){
@@ -478,12 +493,10 @@ function copy_all(){
 }
 //testing...
 
-
 function logzio_button(){
     var uuid = document.getElementsByTagName("TEXTAREA")[0].value;
     uuid = uuid.replace(/\n/g,",");
     var uuid_logzio = url_logzio1 + uuid + url_logzio2;
-
     if(uuid!=""){
         window.open(uuid_logzio,'_blank');
     }
@@ -495,25 +508,15 @@ function logzio_button(){
 function scraping_button(){
     var dropdownlist_scraping_id = document.getElementById("dropdownlist_scraping");
     select_options = dropdownlist_scraping_id.options[dropdownlist_scraping_id.selectedIndex].value;
-    //testing
-    var data = document.getElementsByTagName("TEXTAREA")[0].value;
     var url;
-    data = data.replace(/\n/g,",");//
-
-    if(data == ""){
-        window.alert("Please provide the info");
+    var data_result = dataValidation();
+    if(data_result[0].match(ip4_rx)){
+        url = url_procurement_ip + data_result;
     }
-    //testing
     else{
-        console.log("text area valu ======== " + data);
-        if(data.match(ip4_rx)){
-             url = url_procurement_ip + data;
-        }
-        else{
-             url = url_procurement_hostname + data;
-        }
-        getDeviceInfo(data,url);
+        url = url_procurement_hostname + data_result;
     }
+    getDeviceInfo(data_result,url);
 }
 
 function images_button(){
@@ -558,12 +561,12 @@ function formatting_button(){
     else{
     var split_machine = machine_info.split("\n");
     var split_data;
-    var my_uni = "";
-    var my_ref = "";
-    var my_hostname = "";
-    var my_ip = "";
-    var my_username = "";
-    var my_password = "";
+    var my_uni = "N/A";
+    var my_ref = "N/A";
+    var my_hostname = "N/A";
+    var my_ip = "N/A";
+    var my_username = "N/A";
+    var my_password = "N/A";
     var machine_list = [];
 
     var dropdownlist_format_id = document.getElementById("dropdownlist_format");
@@ -572,7 +575,9 @@ function formatting_button(){
     var csv_string="";
 
     for(var i = 0; i < split_machine.length; i++){
-        split_data = split_machine[i].split(/(, |\s+)/);
+        //split_data = split_machine[i].split(/(, |\s+)/);
+        split_data = split_machine[i].split(split_rx);
+
         for(var j = 0; j < split_data.length; j++){
             if(split_data[j].match(/^(UNI)[-]?\d*/)){ // need to edit this ex) UNI-xxxxxx
                 my_uni = split_data[j];
@@ -592,7 +597,7 @@ function formatting_button(){
         }
         var myMachine = new MachineDeploy(my_hostname, my_ip, my_uni,my_username, my_password);
         machine_list.push(myMachine);
-        console.log(machine_list);
+        //console.log(machine_list);
     }
 
     for(var k=0; k < machine_list.length; k++){
@@ -631,7 +636,6 @@ class Machine{
 	printHostnameIPLocationDC(){
 		return this.hostname + " " + this.ip + " " + this.location + " " + this.dc + "\n";
 	}
-
 
 	get getHostname(){
 		return this.hostname;
