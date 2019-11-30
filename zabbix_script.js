@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.9
+// @version      0.1.9.0
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -17,6 +17,9 @@ var style_lightblue = "position: relative; left: 2%; min-width:12%; background-c
 var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 var style_orange = "position: relative; left: 2%; min-width:12%; background-color: orange";
 var style_dropdownlist = "position: relative; left: 2%; min-width:12%; max-width:12%";
+var style_far = "margin-top: 1%";
+var style_narrow = "margin-top: 0.3";
+var style_black_button = "background-color: black; color: white; position: relative; left: 2%; min-width:6%; max-width:6%";
 
 //url
 var url_gameforge_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=name%23%3A%23";
@@ -35,7 +38,6 @@ var url_logzio2 = "%22),sort:!('@timestamp',desc))&_g=(refreshInterval:(display:
 var url_image_menu = "https://gameforge.multiplay.co.uk/events/Online/toolbar.html?sectionid=6;section=;modid=0;admin=0";
 var string_sectionid_firefox = "/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
 var string_sectionid_chrome = "https://zabbix.multiplay.co.uk/cgi-adm/servers.pl?opt=ServersAdminList;sectionid=";
-
 
 // game image
 var game_images1 = "https://gameforge.multiplay.co.uk/cgi-adm/installs.pl?opt=InstallImagesAdminList;sectionid=";
@@ -76,6 +78,7 @@ var mid_rx = /^\d{6}$/;
 var sid_rx = /^\d{7}$/;
 var split_rx = /,\s?|\s+/;
 
+
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
 var textAreaDiv = document.createElement("TEXTAREA");
@@ -90,22 +93,40 @@ if(!textArea){
 Creates list items and adds buttons
 */
 //GF Machines (hostname) button in li
+var li0 = document.createElement("li");
+li0.setAttribute("id", "li0");
+li0.setAttribute("style", "min-width: 16%;");
+textAreaDiv.parentNode.appendChild(li0);
+var copy = document.createElement("input");
+copy.type = "button";
+copy.value = "COPY";
+copy.setAttribute("style", style_black_button);
+copy.onclick = copy_all;
+var clear = document.createElement("input");
+clear.type="button";
+clear.value = "CLEAR";
+clear.setAttribute("style", style_black_button);
+clear.onclick = clear_button;
+document.getElementById("li0").appendChild(copy);
+document.getElementById("li0").appendChild(clear);
+
 var li1 = document.createElement("li");
 li1.setAttribute("id", "li1");
-li1.setAttribute("style", "margin-top: 1%");
-textAreaDiv.parentNode.appendChild(li1);///
+li1.setAttribute("style", style_far);
+//textAreaDiv.parentNode.appendChild(li1);///
+li0.parentNode.appendChild(li1);
 var machines=document.createElement("input");
 machines.type="button";
 machines.value="GF Machines";
 machines.setAttribute("style", style_default_button);
-machines.title =" On textarea above, type hostname(s) or ip(s) or machineid(s) ";
+machines.title =" On textarea above, type hostname(s), ip(s), machineid(s) or serverid(s)";
 machines.onclick = gotogameforge_machines;
 document.getElementById("li1").appendChild(machines);
 
 // Procurement(hostname) button in li
 var li2 = document.createElement("li");
 li2.setAttribute("id", "li2");
-li2.setAttribute("style", "margin-top: 0.3%");
+li2.setAttribute("style", style_narrow);
 li1.parentNode.appendChild(li2);
 var procurement=document.createElement("input");
 procurement.type="button";
@@ -118,7 +139,7 @@ document.getElementById("li2").appendChild(procurement);
 //GF Deleted button in li
 var li3 = document.createElement("li");
 li3.setAttribute("id", "li3");
-li3.setAttribute("style", "margin-top: 0.3%");
+li3.setAttribute("style", style_narrow);
 li2.parentNode.appendChild(li3);
 var deleted = document.createElement("input");
 deleted.type = "button";
@@ -130,7 +151,7 @@ document.getElementById("li3").appendChild(deleted);
 //Logzio button in li
 var li4 = document.createElement("li");
 li4.setAttribute("id", "li4");
-li4.setAttribute("style", "margin-top: 0.3%");
+li4.setAttribute("style", style_narrow);
 li3.parentNode.appendChild(li4);
 var logzio=document.createElement("input");
 logzio.type="button";
@@ -142,7 +163,7 @@ document.getElementById("li4").appendChild(logzio);
 //Scraping dropdown list
 var li4a = document.createElement("li");
 li4a.setAttribute("id", "li4a");
-li4a.setAttribute("style", "margin-top: 1%");
+li4a.setAttribute("style", style_far);
 li4.parentNode.appendChild(li4a);
 var dropdownlist_scraping = document.createElement("SELECT");
 dropdownlist_scraping.setAttribute("id", "dropdownlist_scraping");
@@ -153,7 +174,7 @@ scraping_dropdown();
 //Scraping button in li
 var li5 = document.createElement("li");
 li5.setAttribute("id", "li5");
-li5.setAttribute("style", "margin-top: 0.3%");
+li5.setAttribute("style", style_narrow);
 li4a.parentNode.appendChild(li5);
 var scraping =document.createElement("input");
 scraping.type="button";
@@ -175,7 +196,7 @@ document.getElementById("li7").appendChild(dropdownlist);
 //Load images button in li
 var li8 = document.createElement("li");
 li8.setAttribute("id", "li8");
-li8.setAttribute("style", "margin-top: 0.3%");
+li8.setAttribute("style", style_narrow);
 li7.parentNode.appendChild(li8);
 var images =document.createElement("input");
 images.type="button";
@@ -197,7 +218,7 @@ format_dropdown();
 
 var li9 = document.createElement("li");
 li9.setAttribute("id", "li9");
-li9.setAttribute("style", "margin-top: 0.3%");
+li9.setAttribute("style", style_narrow);
 li8a.parentNode.appendChild(li9);
 var formatting = document.createElement("input");
 formatting.type = "button";
@@ -419,7 +440,6 @@ function getImagesdata(doc){
       obj['Images'].push({"game image":name_array[i], "version":version_array[i]});
       jsonStr = JSON.stringify(obj);
     }
-
 	textAreaDiv.value = my_string;
 	console.log(jsonStr);
 }
@@ -477,7 +497,6 @@ function deleted_button()
         gameforge = url_deleted_machines1 + data_result + url_deleted_machines2
     }
     window.open(gameforge,'_blank');
-
 }
 
 function clear_button(){
@@ -486,10 +505,10 @@ function clear_button(){
 
 //testing...
 function copy_all(){
-        var dummy = document.getElementsByTagName("TEXTAREA")[0].value;
+        var dummy = document.getElementsByTagName("TEXTAREA")[0];
         dummy.select();
         document.execCommand('copy');
-        dummy.remove();
+        //dummy.remove();
 }
 //testing...
 
@@ -554,64 +573,70 @@ function format_dropdown(){
 
 function formatting_button(){
     console.log("formatting button clicked");
+
     var machine_info = document.getElementsByTagName("TEXTAREA")[0].value;
     if(machine_info == ""){
         alert("type data");
     }
     else{
-    var split_machine = machine_info.split("\n");
-    var split_data;
-    var my_uni = "N/A";
-    var my_ref = "N/A";
-    var my_hostname = "N/A";
-    var my_ip = "N/A";
-    var my_username = "N/A";
-    var my_password = "N/A";
-    var machine_list = [];
+        var ipmi_pos = prompt("Please type ipmi position if found");//////////
+        console.log("ipmi pos ======== " + ipmi_pos);////////////////
 
-    var dropdownlist_format_id = document.getElementById("dropdownlist_format");
-    select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
-    console.log("select = " + select_options);
-    var csv_string="";
+        var split_machine = machine_info.split("\n");
+        var split_data;
+        var my_uni = "N/A";
+        var my_ref = "N/A";
+        var my_hostname = "N/A";
+        var my_ip = "N/A";
+        var my_username = "N/A";
+        var my_password = "N/A";
+        var machine_list = [];
 
-    for(var i = 0; i < split_machine.length; i++){
-        //split_data = split_machine[i].split(/(, |\s+)/);
-        split_data = split_machine[i].split(split_rx);
+        var dropdownlist_format_id = document.getElementById("dropdownlist_format");
+        select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
+        console.log("select = " + select_options);
+        var csv_string="";
 
-        for(var j = 0; j < split_data.length; j++){
-            if(split_data[j].match(/^(UNI)[-]?\d*/)){ // need to edit this ex) UNI-xxxxxx
-                my_uni = split_data[j];
+        for(var i = 0; i < split_machine.length; i++){
+            split_data = split_machine[i].split(split_rx);
+            for(var j = 0; j < split_data.length; j++){
+                if(split_data[j].match(/^(UNI)[-]?\d*/)){ // need to edit this ex) UNI-xxxxxx
+                    my_uni = split_data[j];
+                }
+                else if(split_data[j].match(username_rx)){
+                    my_username = split_data[j];
+                }
+                else if(split_data[j].match(hostname_rx)){ // need to edit this ex) gg-bri78. gg-sbri02
+                    my_hostname = split_data[j];
+                }
+                else if(split_data[j].match(ip4_rx)){ // need to figure out how to handle IPMI and IP reference
+                    if(ipmi_pos != null && split_data[j] == split_data[ipmi_pos-1]){
+                        console.log("***ipmi ip === " + split_data[j]);
+                    }else{
+                        my_ip = split_data[j];
+                    }
+                }
+                else if(split_data[j].match(password_rx)){ //this checks if the string contains at least one lower and upper case
+                    my_password = split_data[j];
+                }
             }
-            else if(split_data[j].match(username_rx)){
-                my_username = split_data[j];
+            var myMachine = new MachineDeploy(my_hostname, my_ip, my_uni,my_username, my_password);
+            machine_list.push(myMachine);
+            console.log("split_data=== " + split_data );
+        }
+
+        for(var k=0; k < machine_list.length; k++){
+            if(select_options == format_array_string[0]){
+                csv_string = csv_string + machine_list[k].printCSV() + "\n";
             }
-            else if(split_data[j].match(hostname_rx)){ // need to edit this ex) gg-bri78. gg-sbri02
-                my_hostname = split_data[j];
+            else if(select_options == format_array_string[1]){
+                csv_string = csv_string + machine_list[k].printActivisionCSV() + "\n";
             }
-            else if(split_data[j].match(ip4_rx)){ // need to figure out how to handle IPMI and IP reference
-                my_ip = split_data[j];
-            }
-            else if(split_data[j].match(password_rx)){ //this checks if the string contains at least one lower and upper case
-                my_password = split_data[j];
+            else if(select_options == format_array_string[2]){
+                csv_string = csv_string + machine_list[k].printGGGCSV() + "\n";
             }
         }
-        var myMachine = new MachineDeploy(my_hostname, my_ip, my_uni,my_username, my_password);
-        machine_list.push(myMachine);
-        //console.log(machine_list);
-    }
-
-    for(var k=0; k < machine_list.length; k++){
-        if(select_options == format_array_string[0]){
-            csv_string = csv_string + machine_list[k].printCSV() + "\n";
-        }
-        else if(select_options == format_array_string[1]){
-            csv_string = csv_string + machine_list[k].printActivisionCSV() + "\n";
-        }
-        else if(select_options == format_array_string[2]){
-            csv_string = csv_string + machine_list[k].printGGGCSV() + "\n";
-        }
-    }
-    textAreaDiv.value = csv_string;
+        textAreaDiv.value = csv_string;
     }
 }
 
