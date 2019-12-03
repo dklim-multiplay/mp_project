@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.0
+// @version      0.1.9.1
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -77,7 +77,6 @@ var reference_rx = /^((SERV|SAU)?-?)((\d{4,6})|([A-Z0-9]*)|([a-z0-9]*))?(-OR)?$/
 var mid_rx = /^\d{6}$/;
 var sid_rx = /^\d{7}$/;
 var split_rx = /,\s?|\s+/;
-
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -231,8 +230,9 @@ document.getElementById("li9").appendChild(formatting);
 Functions
 */
 function dataValidation(){
-    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+    var data = document.getElementsByTagName("TEXTAREA")[0].value.trim();
     var split_data = data.split(split_rx);
+
     if(split_data == ""){
         alert("Type data");
     }
@@ -383,7 +383,6 @@ function getData(doc,hostnames){
     var class_array = [];
     //check dropdownlist_scraping option here
     option_string = select_options; //option_string is local variable
-    //console.log("scraping option = " + option_string);
 
     string_array = "";
     for(var i=1; i<rowLength-1;i++){
@@ -452,7 +451,6 @@ function gotogameforge_machines()
     if(data_result[0].match(ip4_rx)){
         gameforge = url_gameforge_ip + data_result;
     }
-
     else if(data_result[0].match(mid_rx)){
         gameforge =url_gameforge_mid + data_result;
     }
@@ -564,6 +562,9 @@ function format_dropdown(){
     format_array_string.push("ip, username, password");
     format_array_string.push("ip, username, \"password\"");
     format_array_string.push("ip, hostname, username, password");
+    format_array_string.push("ip, hostname");
+    format_array_string.push("ip");
+    format_array_string.push("hostname");
     for (var k = 0; k < format_array_string.length; k++) {
         option = document.createElement('option');
         option.value = option.text = format_array_string[k];
@@ -580,8 +581,7 @@ function formatting_button(){
     }
     else{
         var ipmi_pos = prompt("Please type ipmi position if found");//////////
-        console.log("ipmi pos ======== " + ipmi_pos);////////////////
-
+        //console.log("ipmi pos ======== " + ipmi_pos);////////////////
         var split_machine = machine_info.split("\n");
         var split_data;
         var my_uni = "N/A";
@@ -594,7 +594,6 @@ function formatting_button(){
 
         var dropdownlist_format_id = document.getElementById("dropdownlist_format");
         select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
-        console.log("select = " + select_options);
         var csv_string="";
 
         for(var i = 0; i < split_machine.length; i++){
@@ -608,12 +607,14 @@ function formatting_button(){
                 }
                 else if(split_data[j].match(hostname_rx)){ // need to edit this ex) gg-bri78. gg-sbri02
                     my_hostname = split_data[j];
+                    console.log("host name === " + my_hostname);
                 }
                 else if(split_data[j].match(ip4_rx)){ // need to figure out how to handle IPMI and IP reference
                     if(ipmi_pos != null && split_data[j] == split_data[ipmi_pos-1]){
                         console.log("***ipmi ip === " + split_data[j]);
                     }else{
                         my_ip = split_data[j];
+                        console.log("ip address === " + my_ip);
                     }
                 }
                 else if(split_data[j].match(password_rx)){ //this checks if the string contains at least one lower and upper case
@@ -622,7 +623,6 @@ function formatting_button(){
             }
             var myMachine = new MachineDeploy(my_hostname, my_ip, my_uni,my_username, my_password);
             machine_list.push(myMachine);
-            console.log("split_data=== " + split_data );
         }
 
         for(var k=0; k < machine_list.length; k++){
@@ -634,6 +634,15 @@ function formatting_button(){
             }
             else if(select_options == format_array_string[2]){
                 csv_string = csv_string + machine_list[k].printGGGCSV() + "\n";
+            }
+            else if(select_options == format_array_string[3]){
+                csv_string = csv_string + machine_list[k].printIPHostname() + "\n";
+            }
+            else if(select_options == format_array_string[4]){
+                csv_string = csv_string + machine_list[k].printIP() + "\n";
+            }
+            else if(select_options == format_array_string[5]){
+                csv_string = csv_string + machine_list[k].printHostname() + "\n";
             }
         }
         textAreaDiv.value = csv_string;
@@ -712,5 +721,14 @@ class MachineDeploy extends Machine{
     }
     printGGGCSV(){ //index2
         return this.ip + ", " + this.hostname + ", " + this.username + ", " + this.password;
+    }
+    printIPHostname(){
+        return this.ip + ", " + this.hostname;
+    }
+    printIP(){
+        return this.ip;
+    }
+    printHostname(){
+        return this.hostname;
     }
 }
