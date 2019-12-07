@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.3
+// @version      0.1.9.4
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -446,7 +446,6 @@ function getImagesdata(doc){
 	console.log(jsonStr);
 }
 
-
 function gotogameforge_machines()
 {
     var data_result = dataValidation();
@@ -464,7 +463,6 @@ function gotogameforge_machines()
         gameforge = url_gameforge_hostname + data_result;
     }
     window.open(gameforge,'_blank');
-
 }
 
 function gotogameforge_procurement()
