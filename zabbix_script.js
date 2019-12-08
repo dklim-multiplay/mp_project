@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.4
+// @version      0.1.9.5
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -13,6 +13,7 @@
 
 //styles
 var style_default_button = "position: relative; left: 2%; min-width:12%; max-width:12%";
+var style_far_button = "position: relative; margin-top:1%; left: 2%; min-width:12%; max-width:12%";
 var style_lightblue = "position: relative; left: 2%; min-width:12%; background-color: lightblue";
 var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 var style_orange = "position: relative; left: 2%; min-width:12%; background-color: orange";
@@ -77,6 +78,9 @@ var reference_rx = /^((SERV|SAU)?-?)((\d{4,6})|([A-Z0-9]*)|([a-z0-9]*))?(-OR)?$/
 var mid_rx = /^\d{6}$/;
 var sid_rx = /^\d{7}$/;
 var split_rx = /,\s?|\s+/;
+
+//
+var winrm_string = "echo 'Enable Administrator user'\nnet user Administrator /active:yes\necho 'Creating PuppetAdmin user'\nnet user PuppetAdmin \"(@$&2oyeg2e\" /add\nnet localgroup Administrators PuppetAdmin /add\necho 'Starting to configure winrm'\nwinrm quickconfig -q\nwinrm set winrm/config/winrs '@{MaxMemoryPerShellMB=\"300\"}'\nwinrm set winrm/config '@{MaxTimeoutms=\"1800000\"}'\nwinrm set winrm/config/service '@{AllowUnencrypted=\"true\"}'\nwinrm set winrm/config/service/auth '@{Basic=\"true\"}'\necho 'Starting to configure firewall rules'\nnetsh advfirewall firewall add rule name=\"WinRM 5985\" protocol=TCP dir=in localport=5985 action=allow\nnetsh advfirewall firewall add rule name=\"WinRM 5986\" protocol=TCP dir=in localport=5986 action=allow\nnet stop winrm\ncmd /c sc config winrm start=auto\nnet start winrm\necho \"setting ExecutionPolicy\"\nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope LocalMachine -Force\n";
 
 //Replaces leftDiv with text area and buttons
 var leftDiv = document.getElementsByClassName("dashbrd-grid-widget")[0]; //existing div on the left
@@ -225,6 +229,21 @@ formatting.value = "Print CSV";
 formatting.onclick = formatting_button;
 formatting.setAttribute("style", style_default_button);
 document.getElementById("li9").appendChild(formatting);
+
+/////////testing
+// Procurement(hostname) button in li
+var li10 = document.createElement("li");
+li10.setAttribute("id", "li10");
+li10.setAttribute("style", style_narrow);
+li9.parentNode.appendChild(li10);
+var winrmcopy=document.createElement("input");
+winrmcopy.type="button";
+winrmcopy.value="WinRM script";
+//winrmcopy.title =" On textarea above, type hostname(s) or ip(s) ";
+winrmcopy.setAttribute("style", style_far_button);
+winrmcopy.onclick = get_winrm_script;
+document.getElementById("li10").appendChild(winrmcopy);
+
 
 /*
 Functions
@@ -504,12 +523,23 @@ function clear_button(){
 
 //testing...
 function copy_all(){
-        var dummy = document.getElementsByTagName("TEXTAREA")[0];
-        dummy.select();
-        document.execCommand('copy');
-        //dummy.remove();
+    var dummy = document.getElementsByTagName("TEXTAREA")[0];
+    dummy.select();
+    document.execCommand('copy');
+    //dummy.remove();
 }
 //testing...
+function get_winrm_script(){
+    console.log("get winrm clicked");
+    console.log("winrm_string");
+    textAreaDiv.value = winrm_string;
+    var dummy = document.getElementsByTagName("TEXTAREA")[0];
+    dummy.select();
+    document.execCommand('copy');
+    textAreaDiv.value = '';
+}
+
+
 
 function logzio_button(){
     var uuid = document.getElementsByTagName("TEXTAREA")[0].value;
