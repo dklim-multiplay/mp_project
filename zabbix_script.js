@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.5
+// @version      0.1.9.6
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -598,6 +598,7 @@ function format_dropdown(){
     format_array_string.push("ip");
     format_array_string.push("hostname");
     format_array_string.push("hostname,ip,username,password");
+    format_array_string.push("replace , with newline");
     for (var k = 0; k < format_array_string.length; k++) {
         option = document.createElement('option');
         option.value = option.text = format_array_string[k];
@@ -624,6 +625,8 @@ function formatting_button(){
         var my_username = "N/A";
         var my_password = "N/A";
         var machine_list = [];
+
+        var split_comma = machine_info.split(split_rx); ///////////testing
 
         var dropdownlist_format_id = document.getElementById("dropdownlist_format");
         select_options = dropdownlist_format_id.options[dropdownlist_format_id.selectedIndex].value;
@@ -679,6 +682,9 @@ function formatting_button(){
             }
             else if(select_options == format_array_string[6]){
                 csv_string = csv_string + machine_list[k].printGGGHandover() + "\n";
+            }
+            else if(select_options == format_array_string[7]){
+                csv_string = split_comma.join("\n");
             }
         }
         textAreaDiv.value = csv_string;
@@ -773,4 +779,6 @@ class MachineDeploy extends Machine{
     printGGGHandover(){
         return this.hostname + "," + this.ip + "," + this.username + "," + this.password;
     }
+
+
 }
