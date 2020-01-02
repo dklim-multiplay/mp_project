@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.6
+// @version      0.1.9.7
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -30,6 +30,9 @@ var url_gameforge_serverid = "https://gameforge.multiplay.co.uk/cgi-adm/servers.
 var url_gameforge_ref = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachinesAdminList;event=Online;MachinesFilter_filters=provider_reference%23%3A%23";
 var url_procurement_hostname = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=name%23%3A%23";
 var url_procurement_ip = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=ip%23%3A%23";
+
+var url_procurement_mid = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?opt=MachineProcurementReport;event=Online;MachineProcurementReport_filters=machineid%23%3A%23";
+
 var url_deleted_machines1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=name%23%3A%23";
 var url_deleted_machines2 = ";MachinesFilter_filter_deleted_options=1;MachinesFilter_filter_value=Yes;MachinesFilter_filter_go=Go";
 var url_deleted_machinesip1 = "https://gameforge.multiplay.co.uk/cgi-adm/machines.pl?_aeid=25;opt=MachinesFilter;eventid=25;MachinesFilter_filters=deleted%23%3A%23Yes;MachinesFilter_filters=ip%23%3A%23";
@@ -239,7 +242,7 @@ li9.parentNode.appendChild(li10);
 var winrmcopy=document.createElement("input");
 winrmcopy.type="button";
 winrmcopy.value="WinRM script";
-//winrmcopy.title =" On textarea above, type hostname(s) or ip(s) ";
+winrmcopy.title ="WinRm script";
 winrmcopy.setAttribute("style", style_far_button);
 winrmcopy.onclick = get_winrm_script;
 document.getElementById("li10").appendChild(winrmcopy);
@@ -492,6 +495,11 @@ function gotogameforge_procurement()
     if(data_result[0].match(ip4_rx)){
         gameforge = url_procurement_ip + data_result;
     }
+    // Gameforge can search for 1 mid, not many
+    else if(data_result[0].match(mid_rx)){
+            gameforge = url_procurement_mid + data_result;
+    }
+
     else{
         gameforge = url_procurement_hostname + data_result;
     }
@@ -521,14 +529,13 @@ function clear_button(){
     textAreaDiv.value='';
 }
 
-//testing...
 function copy_all(){
     var dummy = document.getElementsByTagName("TEXTAREA")[0];
     dummy.select();
     document.execCommand('copy');
     //dummy.remove();
 }
-//testing...
+
 function get_winrm_script(){
     console.log("get winrm clicked");
     console.log("winrm_string");
@@ -538,8 +545,6 @@ function get_winrm_script(){
     document.execCommand('copy');
     textAreaDiv.value = '';
 }
-
-
 
 function logzio_button(){
     var uuid = document.getElementsByTagName("TEXTAREA")[0].value;
@@ -561,6 +566,11 @@ function scraping_button(){
     if(data_result[0].match(ip4_rx)){
         url = url_procurement_ip + data_result;
     }
+    ///Gameforge can search for 1 mid, not many
+    else if(data_result[0].match(mid_rx)){
+        url = url_procurement_mid + data_result;
+    }
+
     else{
         url = url_procurement_hostname + data_result;
     }
