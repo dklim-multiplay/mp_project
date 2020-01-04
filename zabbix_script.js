@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.7
+// @version      0.1.9.8
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -19,7 +19,9 @@ var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height
 var style_orange = "position: relative; left: 2%; min-width:12%; background-color: orange";
 var style_dropdownlist = "position: relative; left: 2%; min-width:12%; max-width:12%";
 var style_far = "margin-top: 1%";
-var style_narrow = "margin-top: 0.3";
+var style_narrow = "margin-top: 0.3"; //
+
+
 var style_black_button = "background-color: black; color: white; position: relative; left: 2%; min-width:6%; max-width:6%";
 
 //url
