@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zabbix Script
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9.8
+// @version      0.1.9.9
 // @description  This script adds textarea and buttons on the left. It helps to find machine information and saves searching time.
 // @author       dk.lim@unity3d.com
 // @match        https://zabbix.multiplay.co.uk/zabbix.php?action=dashboard.view
@@ -14,14 +14,15 @@
 //styles
 var style_default_button = "position: relative; left: 2%; min-width:12%; max-width:12%";
 var style_far_button = "position: relative; margin-top:1%; left: 2%; min-width:12%; max-width:12%";
+
+var style_winrm_button = "position: relative; margin-top:1%; left: 2%; min-width:12%; max-width:12%; background-color: dodgerblue";
+
 var style_lightblue = "position: relative; left: 2%; min-width:12%; background-color: lightblue";
 var style_textArea = "min-width: 16%; max-width:16%; min-height: 25%; max-height: 50%; background-color: linear-gradient(to bottom, #fff, #e6e6e6); border-color: grey";
 var style_orange = "position: relative; left: 2%; min-width:12%; background-color: orange";
 var style_dropdownlist = "position: relative; left: 2%; min-width:12%; max-width:12%";
 var style_far = "margin-top: 1%";
-var style_narrow = "margin-top: 0.3"; //
-
-
+var style_narrow = "margin-top: 0.3";
 var style_black_button = "background-color: black; color: white; position: relative; left: 2%; min-width:6%; max-width:6%";
 
 //url
@@ -212,8 +213,9 @@ images.value="Load Images";
 images.onclick = images_button;
 images.setAttribute("style", style_default_button);
 document.getElementById("li8").appendChild(images);
-getGameImages();
+connectGameforgeForSelectImages();
 
+//formatting dropdown list
 var li8a = document.createElement("li");
 li8a.setAttribute("id", "li8a");
 li8a.setAttribute("style", "margin-top: 2%");
@@ -224,6 +226,7 @@ dropdownlist_format.setAttribute("style", style_dropdownlist);
 document.getElementById("li8a").appendChild(dropdownlist_format);
 format_dropdown();
 
+//formatting button
 var li9 = document.createElement("li");
 li9.setAttribute("id", "li9");
 li9.setAttribute("style", style_narrow);
@@ -235,8 +238,7 @@ formatting.onclick = formatting_button;
 formatting.setAttribute("style", style_default_button);
 document.getElementById("li9").appendChild(formatting);
 
-/////////testing
-// Procurement(hostname) button in li
+//WinRM enable script
 var li10 = document.createElement("li");
 li10.setAttribute("id", "li10");
 li10.setAttribute("style", style_narrow);
@@ -245,10 +247,22 @@ var winrmcopy=document.createElement("input");
 winrmcopy.type="button";
 winrmcopy.value="WinRM script";
 winrmcopy.title ="WinRm script";
-winrmcopy.setAttribute("style", style_far_button);
+winrmcopy.setAttribute("style", style_winrm_button);
 winrmcopy.onclick = get_winrm_script;
 document.getElementById("li10").appendChild(winrmcopy);
 
+//Customer details
+var li11 = document.createElement("li");
+li11.setAttribute("id", "li11");
+li11.setAttribute("style", style_narrow);
+li10.parentNode.appendChild(li11);
+var custdetails = document.createElement("input");
+custdetails.type="button";
+custdetails.value="Customer Details";
+custdetails.title="Please type studio name, MH Number or slack channel with # in textarea to search";
+custdetails.setAttribute("style", style_far_button);
+custdetails.onclick=get_cust_details;
+document.getElementById("li11").appendChild(custdetails);
 
 /*
 Functions
@@ -265,8 +279,8 @@ function dataValidation(){
     }
 }
 
-function getDeviceInfo(data,url){
-    console.log("getDeviceInfo called");
+function connectGameforgeScraping(data,url){
+    console.log("connectGameforgeScraping called");
     console.log("url ===== " + url);
 
     GM.xmlHttpRequest({
@@ -289,7 +303,7 @@ function getDeviceInfo(data,url){
                     xhr_doc.documentElement.appendChild(xhr_frag);
 
                     console.log("callinng testName");
-                    var testName = getData(xhr_doc,data);
+                    var testName = printScrapingData(xhr_doc,data);
                 }
             }}
     });
@@ -298,9 +312,8 @@ function getDeviceInfo(data,url){
 /*
 Desc: This function gets the game images and the version number from gameforge. You can simply check the latest version of game images on textarea
 */
-function getImageURL(section_id,url){
-    console.log("getImageURL called");
-
+function connectGameforgeImages(section_id,url){
+    console.log("connectGameforgeImages called");
     GM.xmlHttpRequest({
         method: 'GET',
         url: url,
@@ -319,14 +332,14 @@ function getImageURL(section_id,url){
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
                     console.log("callinng game images");
-                    var testName = getImagesdata(xhr_doc);
+                    var testName = printGameImages(xhr_doc);
                     console.log(url);
                 }
             }}
     });
 }
 
-function getGameImages(){
+function connectGameforgeForSelectImages(){
     console.log("getGameImages called");
     GM.xmlHttpRequest({
         method: 'GET',
@@ -346,13 +359,13 @@ function getGameImages(){
                     xhr_doc.adoptNode(xhr_frag);
                     xhr_doc.documentElement.appendChild(xhr_frag);
                     console.log("callinng testName");
-                    var testName = getImages(xhr_doc);
+                    var testName = loadGameImagesToSelect(xhr_doc);
                 }
             }}
     });
 }
 
-function getImages(doc){
+function loadGameImagesToSelect(doc){
     var mytable = doc.getElementsByClassName("menugrplink");
     var table_length = mytable.length;
     var section_string;
@@ -393,7 +406,7 @@ function getImages(doc){
     }
 }
 
-function getData(doc,hostnames){
+function printScrapingData(doc,hostnames){
    var myTable = doc.getElementsByClassName("itemList");
     myTable[0].setAttribute("id", "myTable");
     var oTable = myTable[0];
@@ -438,8 +451,101 @@ function getData(doc,hostnames){
     textAreaDiv.value = string_array;
 }
 
-function getImagesdata(doc){
-    console.log("in getImagesdata");
+function getCustDetailsInfo(data,url){
+    console.log("getCustDetailsInfo called");
+    console.log("url ===== " + url);
+
+    GM.xmlHttpRequest({
+        method: 'GET',
+        url: url,
+        headers: {
+            'User-agent': 'Mozilla/5.0 (compatible) Greasemonkey',
+            'Accept': 'application/atom+xml,application/xml,text/xml',
+        },
+        onload: function(response){
+        //onreadystatechange: function(response) {
+            //if (response.readyState === 4) {
+                //if (response.status == 200) {
+
+                    var range = document.createRange();
+                    range.setStartAfter(document.body);
+                    var xhr_frag = range.createContextualFragment(response.responseText);
+                    var xhr_doc = document.implementation.createDocument(null, 'html', null);
+                    xhr_doc.adoptNode(xhr_frag);
+                    xhr_doc.documentElement.appendChild(xhr_frag);
+
+                    console.log("callinng testName");
+                    var testName = getCustDetailsData(xhr_doc,data);
+                }
+            //}}
+    });
+}
+
+function getCustDetailsData(doc,custdata){
+   console.log("In getCustDetailsData");
+   console.log("custdata = " + custdata);
+   var tablediv = doc.getElementsByClassName("table-wrap")
+   var custTable = tablediv[0];
+    if(typeof(custTable)=='undefined'){
+        alert('Conection failed! Make sure if you are logged into Confluence.');
+    }
+    var rowLength = custTable.childNodes[0].rows.length;
+    var option_string;
+
+    var studioName;
+    var game;
+    var accountManager;
+    var technicalAccountManager;
+    var solutionEngineer;
+    var professionalService;
+    var slack;
+    var mhnum;
+    var product;
+    var priority;
+
+    var result_string;
+
+    for(var i=1; i<rowLength-1;i++){
+        studioName = custTable.childNodes[0].rows.item(i).cells[0].innerText;
+        mhnum = custTable.childNodes[0].rows.item(i).cells[7].innerText;
+        slack = custTable.childNodes[0].rows.item(i).cells[6].innerText;
+        if(custdata == studioName || custdata == mhnum || custdata == slack){
+            studioName = custTable.childNodes[0].rows.item(i).cells[0].innerText;
+            game = custTable.childNodes[0].rows.item(i).cells[1].innerText;
+            accountManager = custTable.childNodes[0].rows.item(i).cells[2].innerText;
+            technicalAccountManager = custTable.childNodes[0].rows.item(i).cells[3].innerText;
+            solutionEngineer = custTable.childNodes[0].rows.item(i).cells[4].innerText;
+            professionalService = custTable.childNodes[0].rows.item(i).cells[5].innerText;
+            slack = custTable.childNodes[0].rows.item(i).cells[6].innerText;
+            mhnum = custTable.childNodes[0].rows.item(i).cells[7].innerText;
+            product = custTable.childNodes[0].rows.item(i).cells[8].innerText;
+            priority = custTable.childNodes[0].rows.item(i).cells[9].innerText;
+
+            var myCustDetails = new CustomerDetails(studioName, game, accountManager, technicalAccountManager, solutionEngineer, professionalService, slack, mhnum, product, priority);
+            console.log("studioName = " + studioName);
+            console.log("game = " + game);
+            console.log("accountManager = " + accountManager);
+            console.log("technicalAccountManager = " + technicalAccountManager);
+            console.log("solutionEngineer = " + solutionEngineer);
+            console.log("professionalService = " + professionalService);
+            console.log("slack = " + slack);
+            console.log("mhnum = " + mhnum);
+            console.log("product = " + product);
+            console.log("priority = " + priority);
+        }
+    }
+
+    if(typeof(myCustDetails)=='undefined'){
+        alert('unable to find the data. Please type the correct data');
+    }else{
+        result_string = myCustDetails.printCustDetails();
+        textAreaDiv.value = result_string;
+    }
+}
+
+
+function printGameImages(doc){
+    console.log("in printGameImages");
     var name_array = [];
     var image_array = [];
     var version_array=[];
@@ -458,7 +564,6 @@ function getImagesdata(doc){
     	name_array.push(oTable.rows.item(i).cells[1].innerText);
     	version_array.push(oTable.rows.item(i).cells[2].innerText);
     }
-
   	obj['Images'].pop();
   	for(i=0; i<name_array.length; i++){
       my_array.push(name_array[i] + " " + version_array[i]);
@@ -576,7 +681,7 @@ function scraping_button(){
     else{
         url = url_procurement_hostname + data_result;
     }
-    getDeviceInfo(data_result,url);
+    connectGameforgeScraping(data_result,url);
 }
 
 function images_button(){
@@ -586,7 +691,7 @@ function images_button(){
     var section_id = map.get(strUser);
     var url = game_images1 + section_id + game_images2;
     console.log(section_id);
-    getImageURL(section_id, url);
+    connectGameforgeImages(section_id, url);
 }
 
 function scraping_dropdown(){
@@ -703,6 +808,19 @@ function formatting_button(){
     }
 }
 
+function get_cust_details(){
+    var url = "https://docs-internal.multiplay.com/pages/viewpage.action?spaceKey=TECHOPS&title=Customer+Details";
+
+    var data = document.getElementsByTagName("TEXTAREA")[0].value;
+
+    if(data == ""){
+        alert("Type data");
+    }
+    else{
+        getCustDetailsInfo(data,url);
+    }
+}
+
 class Machine{
 	constructor(hostname,ip,location,dc,reference){
 		this.hostname=hostname;
@@ -791,6 +909,22 @@ class MachineDeploy extends Machine{
     printGGGHandover(){
         return this.hostname + "," + this.ip + "," + this.username + "," + this.password;
     }
+}
 
-
+class CustomerDetails{
+	constructor(studioName,game,accountManager,technicalAccountManager,solutionEngineer, professionalService, slack, mhnum, product, priority){
+        this.studioName = studioName;
+        this.game = game;
+        this.accountManager = accountManager;
+        this.technicalAccountManager = technicalAccountManager;
+        this.solutionEngineer = solutionEngineer;
+        this.professionalService = professionalService;
+        this.slack = slack;
+        this.mhnum = mhnum;
+        this.product = product;
+        this.priority = priority;
+	}
+    printCustDetails(){
+		return "studio name = " + this.studioName + "\ngame = " + this.game + "\naccountManager = " + this.accountManager + "\ntechnicalAccountManager = " + this.technicalAccountManager + "\nsolutionEngineer = " + this.solutionEngineer + "\nprofessionalService = " + this.professionalService + "\nslack = " + this.slack + "\nmhnum = " + this.mhnum + "\nproduct = " + this.product + "\npriority = " + this.priority;
+	}
 }
